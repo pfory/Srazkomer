@@ -8,18 +8,19 @@ pulseDuration     = 0
 
 wifi.setmode(wifi.STATION)
 wifi.sta.config("Datlovo","Nu6kMABmseYwbCoJ7LyG")
+wifi.sta.autoconnect(1)
 
 Broker="88.146.202.186"  
 
-pinLed = 3
+pinLed = 4
 gpio.mode(pinLed,gpio.OUTPUT)  
-gpio.write(pinLed,gpio.LOW)  
+gpio.write(pinLed,gpio.HIGH)  
 
 versionSW         = 0.1
 versionSWString   = "Srazkomer v" 
 print(versionSWString .. versionSW)
 
-pin = 4
+pin = 3
 gpio.mode(pin,gpio.INT)
 
 function pinPulse(level)
@@ -30,32 +31,38 @@ function pinPulse(level)
     gpio.write(pinLed,gpio.HIGH)  
     print("nabezna")
   else 
-    if (tmr.now() - pulseDuration) > 70000 and (tmr.now() - pulseDuration) < 100000 then
+--    if (tmr.now() - pulseDuration) > 70000 and (tmr.now() - pulseDuration) < 100000 then
       pulseTotal=pulseTotal+1
       gpio.write(pinLed,gpio.LOW) 
       print("dobezna")
       sendData()
-    end
+--    end
   end
 end
 
 
 function sendData()
   print("I am sending pulse to OpenHab")
-  print(pulseTotal)
+  print("PulseTotal:"..pulseTotal)
   m:publish(base.."Pulse",       pulseTotal,0,0)  
   m:publish(base.."VersionSW",   versionSW,0,0)  
-  m:publish(base.."HeartBeat",   heartBeat,0,0)
 
-  file.open("config.ini", "w+")
+  file.open("config.ini", "w")
   file.write(string.format("%u", pulseTotal))
   file.write("\n\r")
   file.close()
-  
+  sendHB()
+end
+
+function sendHB()
+  print("I am sending HB to OpenHab")
+  m:publish(base.."HeartBeat",   heartBeat,0,0)
+ 
   if heartBeat==0 then heartBeat=1
   else heartBeat=0
   end
 end
+
 
 function mqtt_sub()  
   m:subscribe(base,0, function(conn)   
@@ -114,6 +121,9 @@ tmr.alarm(0, 1000, 1, function()
       end
       print(pulseTotal)
       file.close()  
+      tmr.alarm(0, 60000, tmr.ALARM_AUTO, function()
+        sendHB() 
+      end)
     end) 
   end
 end)
