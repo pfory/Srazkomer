@@ -8,6 +8,12 @@ pulseDuration     = 0
 
 wifi.setmode(wifi.STATION)
 wifi.sta.config("Datlovo","Nu6kMABmseYwbCoJ7LyG")
+-- cfg={
+  -- ip = "192.168.1.155",
+  -- netmask = "255.255.255.0",
+  -- gateway = "192.168.1.2"
+-- }
+-- wifi.sta.setip(cfg)
 wifi.sta.autoconnect(1)
 
 Broker="88.146.202.186"  
@@ -16,7 +22,7 @@ pinLed = 4
 gpio.mode(pinLed,gpio.OUTPUT)  
 gpio.write(pinLed,gpio.HIGH)  
 
-versionSW         = 0.1
+versionSW         = 0.2
 versionSWString   = "Srazkomer v" 
 print(versionSWString .. versionSW)
 
@@ -24,28 +30,26 @@ pin = 3
 gpio.mode(pin,gpio.INT)
 
 function pinPulse(level)
-  if gpio.read(pin) == gpio.HIGH then
+  if gpio.read(pin) == gpio.LOW then
   --if level == gpio.HIGH then --nabezna hrana
     --tmr.delay(10000)
     pulseDuration = tmr.now()
     gpio.write(pinLed,gpio.HIGH)  
-    print("nabezna")
+--    print("nabezna")
   else 
---    if (tmr.now() - pulseDuration) > 70000 and (tmr.now() - pulseDuration) < 100000 then
+    if (tmr.now() - pulseDuration) > 20000 and (tmr.now() - pulseDuration) < 100000 then
       pulseTotal=pulseTotal+1
       gpio.write(pinLed,gpio.LOW) 
-      print("dobezna")
+--      print("dobezna")
       sendData()
---    end
+    end
   end
 end
 
 
 function sendData()
-  print("I am sending pulse to OpenHab")
-  print("PulseTotal:"..pulseTotal)
+  uart.write(0,"I am sending pulse to OpenHab:"..pulseTotal.." pulse(s).\n\r")
   m:publish(base.."Pulse",       pulseTotal,0,0)  
-  m:publish(base.."VersionSW",   versionSW,0,0)  
 
   file.open("config.ini", "w")
   file.write(string.format("%u", pulseTotal))
@@ -64,11 +68,11 @@ function sendHB()
 end
 
 
-function mqtt_sub()  
-  m:subscribe(base,0, function(conn)   
-    print("Mqtt Subscribed to OpenHAB feed for device "..deviceID)  
-  end)  
-end  
+-- function mqtt_sub()  
+  -- m:subscribe(base,0, function(conn)   
+    -- print("Mqtt Subscribed to OpenHAB feed for device "..deviceID)  
+  -- end)  
+-- end  
 
 
 function reconnect()
@@ -100,27 +104,31 @@ m:on("message", function(conn, topic, data)
   print("Received:" .. topic .. ":" .. data) 
 end)  
 
+uart.write(0,"Connecting to Wifi")
 tmr.alarm(0, 1000, 1, function() 
-  print ("Connecting to Wifi... ")
+  uart.write(0,".")
   if wifi.sta.status() == 5 and wifi.sta.getip() ~= nil then 
     print ("Wifi connected")
+    print(wifi.sta.getmac())
     tmr.stop(0) 
     m:connect(Broker, 31883, 0, function(conn) 
-      mqtt_sub() --run the subscription function 
+      --mqtt_sub() --run the subscription function 
       print(wifi.sta.getip())
       print("Mqtt Connected to:" .. Broker.." - "..base) 
       gpio.trig(pin, "both", pinPulse)
-      print ("Read config file... ")
+      uart.write(0,"Read config file... ")
       file.open("config.ini", "r")
       s = file.readline()
       if (s==nil) then
-        print("empty file")
+        uart.write(0,"empty file.")
         pulseTotal=0
       else
-        pulseTotal = s
+        pulseTotal = tonumber(s)
       end
-      print(pulseTotal)
+      uart.write(0,pulseTotal.." pulse(s).\n\r")
       file.close()  
+      m:publish(base.."VersionSW",   versionSW,0,0)  
+      sendHB() 
       tmr.alarm(0, 60000, tmr.ALARM_AUTO, function()
         sendHB() 
       end)

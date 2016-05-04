@@ -1,2 +1,2 @@
-print("Wait 10 seconds please")
-tmr.alarm(0, 10000, 0, function() dofile('Srazkomer.lua') end)
+print("Wait 5 seconds please")
+tmr.alarm(0, 5000, 0, function() dofile('Srazkomer.lua') end)
