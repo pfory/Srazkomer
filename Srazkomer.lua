@@ -3,7 +3,7 @@ base = "/home/Srazkomer/esp05/"
 deviceID = "ESP8266 Srazkomer "..node.chipid()
 
 pulseTotal        = 0
-heartBeat         = node.bootreason()
+heartBeat         = node.bootreason() + 10
 pulseDuration     = 0
 
 wifi.setmode(wifi.STATION)
