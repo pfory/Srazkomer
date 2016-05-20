@@ -22,7 +22,7 @@ pinLed = 4
 gpio.mode(pinLed,gpio.OUTPUT)  
 gpio.write(pinLed,gpio.HIGH)  
 
-versionSW         = 0.2
+versionSW         = 0.3
 versionSWString   = "Srazkomer v" 
 print(versionSWString .. versionSW)
 
@@ -68,12 +68,11 @@ function sendHB()
 end
 
 
--- function mqtt_sub()  
-  -- m:subscribe(base,0, function(conn)   
-    -- print("Mqtt Subscribed to OpenHAB feed for device "..deviceID)  
-  -- end)  
--- end  
-
+function mqtt_sub()  
+  m:subscribe(base.."com",0, function(conn)   
+    print("Mqtt Subscribed to OpenHAB feed for device "..deviceID)  
+  end)  
+end
 
 function reconnect()
   print ("Waiting for Wifi")
@@ -102,7 +101,14 @@ end)
  -- on publish message receive event  
 m:on("message", function(conn, topic, data)   
   print("Received:" .. topic .. ":" .. data) 
+  if topic == base.."com" then
+    if data == "ON" then
+      print("Restarting ESP, bye.")
+      node.restart()
+    end
+  end
 end)  
+
 
 uart.write(0,"Connecting to Wifi")
 tmr.alarm(0, 1000, 1, function() 
@@ -112,7 +118,7 @@ tmr.alarm(0, 1000, 1, function()
     print(wifi.sta.getmac())
     tmr.stop(0) 
     m:connect(Broker, 31883, 0, function(conn) 
-      --mqtt_sub() --run the subscription function 
+      mqtt_sub() --run the subscription function 
       print(wifi.sta.getip())
       print("Mqtt Connected to:" .. Broker.." - "..base) 
       gpio.trig(pin, "both", pinPulse)
