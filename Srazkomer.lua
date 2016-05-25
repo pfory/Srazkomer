@@ -22,7 +22,7 @@ pinLed = 4
 gpio.mode(pinLed,gpio.OUTPUT)  
 gpio.write(pinLed,gpio.HIGH)  
 
-versionSW         = 0.3
+versionSW         = 0.4
 versionSWString   = "Srazkomer v" 
 print(versionSWString .. versionSW)
 
@@ -85,6 +85,8 @@ function reconnect()
       mqtt_sub() --run the subscription function 
     end)
   end
+  heartBeat=20
+  sendHB()
 end
 
 
@@ -109,6 +111,10 @@ m:on("message", function(conn, topic, data)
   end
 end)  
 
+-- kazdych 10 minut provede reconnect na broker
+tmr.alarm(5, 600000, 1, function() 
+  reconnect()
+end)
 
 uart.write(0,"Connecting to Wifi")
 tmr.alarm(0, 1000, 1, function() 
