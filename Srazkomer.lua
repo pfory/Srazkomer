@@ -3,17 +3,17 @@ base = "/home/Srazkomer/esp05/"
 deviceID = "ESP8266 Srazkomer "..node.chipid()
 
 pulseTotal        = 0
-heartBeat         = node.bootreason() + 10
 pulseDuration     = 0
+heartBeat         = node.bootreason() + 10
 
 wifi.setmode(wifi.STATION)
 wifi.sta.config("Datlovo","Nu6kMABmseYwbCoJ7LyG")
--- cfg={
-  -- ip = "192.168.1.155",
-  -- netmask = "255.255.255.0",
-  -- gateway = "192.168.1.2"
--- }
--- wifi.sta.setip(cfg)
+cfg={
+  ip = "192.168.1.150",
+  netmask = "255.255.255.0",
+  gateway = "192.168.1.1"
+}
+wifi.sta.setip(cfg)
 wifi.sta.autoconnect(1)
 
 Broker="88.146.202.186"  
@@ -111,10 +111,6 @@ m:on("message", function(conn, topic, data)
   end
 end)  
 
--- kazdych 10 minut provede reconnect na broker
-tmr.alarm(5, 600000, 1, function() 
-  reconnect()
-end)
 
 uart.write(0,"Connecting to Wifi")
 tmr.alarm(0, 1000, 1, function() 
@@ -123,7 +119,7 @@ tmr.alarm(0, 1000, 1, function()
     print ("Wifi connected")
     print(wifi.sta.getmac())
     tmr.stop(0) 
-    m:connect(Broker, 31883, 0, function(conn) 
+    m:connect(Broker, 31883, 0, 1, function(conn) 
       mqtt_sub() --run the subscription function 
       print(wifi.sta.getip())
       print("Mqtt Connected to:" .. Broker.." - "..base) 
