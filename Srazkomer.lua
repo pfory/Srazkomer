@@ -4,7 +4,9 @@ deviceID = "ESP8266 Srazkomer "..node.chipid()
 
 pulseTotal        = 0
 pulseDuration     = 0
-heartBeat         = node.bootreason() + 10
+heartBeat = node.bootreason() + 10
+print("Boot reason:")
+print(heartBeat)
 
 wifi.setmode(wifi.STATION)
 wifi.sta.config("Datlovo","Nu6kMABmseYwbCoJ7LyG")
