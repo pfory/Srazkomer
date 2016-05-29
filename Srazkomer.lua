@@ -5,7 +5,7 @@ deviceID = "ESP8266 Srazkomer "..node.chipid()
 pulseTotal        = 0
 pulseDuration     = 0
 heartBeat = node.bootreason() + 10
-print("Boot reason:")
+uart.write(0, "Boot reason:")
 print(heartBeat)
 
 wifi.setmode(wifi.STATION)
@@ -39,12 +39,12 @@ function pinPulse(level)
     gpio.write(pinLed,gpio.HIGH)  
 --    print("nabezna")
   else 
-    if (tmr.now() - pulseDuration) > 20000 and (tmr.now() - pulseDuration) < 100000 then
+   -- if (tmr.now() - pulseDuration) > 20000 and (tmr.now() - pulseDuration) < 100000 then
       pulseTotal=pulseTotal+1
       gpio.write(pinLed,gpio.LOW) 
 --      print("dobezna")
       sendData()
-    end
+  --  end
   end
 end
 
