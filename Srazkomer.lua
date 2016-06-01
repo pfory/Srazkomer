@@ -63,6 +63,7 @@ end
 function sendHB()
   print("I am sending HB to OpenHab")
   m:publish(base.."HeartBeat",   heartBeat,0,0)
+  m:publish(base.."VersionSW",   versionSW,0,0)  
  
   if heartBeat==0 then heartBeat=1
   else heartBeat=0
@@ -137,7 +138,6 @@ tmr.alarm(0, 1000, 1, function()
       end
       uart.write(0,pulseTotal.." pulse(s).\n\r")
       file.close()  
-      m:publish(base.."VersionSW",   versionSW,0,0)  
       sendHB() 
       tmr.alarm(0, 60000, tmr.ALARM_AUTO, function()
         sendHB() 
