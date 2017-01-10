@@ -97,7 +97,7 @@ extern "C" {
 
 #define RTC_ADR 64
 
-float versionSW                   = 0.6;
+float versionSW                   = 0.61;
 String versionSWString            = "Srazkomer v";
 byte heartBeat                    = 10;
 
@@ -115,6 +115,14 @@ void setup() {
     heartBeat=12;
   } else if (ESP.getResetReason()=="External System") {
     heartBeat=13;
+  } else if (ESP.getResetReason()=="Hardware Watchdog") {
+    heartBeat=14;
+  } else if (ESP.getResetReason()=="Exception") {
+    heartBeat=15;
+  } else if (ESP.getResetReason()=="Software Watchdog") {
+    heartBeat=16;
+  } else if (ESP.getResetReason()=="Deep-Sleep Wake") {
+    heartBeat=17;
   }
   
   //Serial.println(ESP.getFlashChipRealSize);
