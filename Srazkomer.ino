@@ -8,10 +8,13 @@
 const char *ssid = "Datlovo";
 const char *password = "Nu6kMABmseYwbCoJ7LyG";
 
+//#define webserver +13 724 flash +3 812 memory
+#ifdef webserver
 ESP8266WebServer server(80);
+#endif
 
-//#define AIO_SERVER      "192.168.1.56"
-#define AIO_SERVER      "178.77.238.20"
+#define AIO_SERVER      "192.168.1.56"
+//#define AIO_SERVER      "178.77.238.20"
 #define AIO_SERVERPORT  1883
 #define AIO_USERNAME    "datel"
 #define AIO_KEY         "hanka12"
@@ -31,12 +34,12 @@ unsigned long lastSend  = sendDelay * -1;
 Adafruit_MQTT_Client mqtt(&client, AIO_SERVER, AIO_SERVERPORT, AIO_USERNAME, AIO_KEY);
 
 /****************************** Feeds ***************************************/
-Adafruit_MQTT_Publish verSW               = Adafruit_MQTT_Publish(&mqtt, "/home/Srazkomer/esp05t/VersionSW");
-Adafruit_MQTT_Publish hb                  = Adafruit_MQTT_Publish(&mqtt, "/home/Srazkomer/esp05t/HeartBeat");
-Adafruit_MQTT_Publish pulse               = Adafruit_MQTT_Publish(&mqtt, "/home/Srazkomer/esp05t/Pulse");
+Adafruit_MQTT_Publish verSW               = Adafruit_MQTT_Publish(&mqtt, "/home/Srazkomer/esp05/VersionSW");
+Adafruit_MQTT_Publish hb                  = Adafruit_MQTT_Publish(&mqtt, "/home/Srazkomer/esp05/HeartBeat");
+Adafruit_MQTT_Publish pulse               = Adafruit_MQTT_Publish(&mqtt, "/home/Srazkomer/esp05/Pulse");
 
-Adafruit_MQTT_Subscribe setupPulse    = Adafruit_MQTT_Subscribe(&mqtt, "/home/Srazkomer/esp05t/setupPulse");
-Adafruit_MQTT_Subscribe restart       = Adafruit_MQTT_Subscribe(&mqtt, "/home/Srazkomer/esp05t/restart");
+Adafruit_MQTT_Subscribe setupPulse    = Adafruit_MQTT_Subscribe(&mqtt, "/home/Srazkomer/esp05/setupPulse");
+Adafruit_MQTT_Subscribe restart       = Adafruit_MQTT_Subscribe(&mqtt, "/home/Srazkomer/esp05/restart");
 
 #define SERIALSPEED 115200
 
@@ -44,6 +47,7 @@ void MQTT_connect(void);
 
 File f;
 
+#ifdef webserver
 void handleRoot()
 {
   
@@ -90,12 +94,11 @@ void handleNotFound() {
 
 	server.send(404, "text/plain", message);
 }
+#endif
 
 extern "C" {
   #include "user_interface.h"
 }
-
-#define RTC_ADR 64
 
 float versionSW                   = 0.61;
 String versionSWString            = "Srazkomer v";
@@ -142,7 +145,8 @@ void setup() {
 	Serial.println(WiFi.localIP());
   
   SPIFFS.begin();
-  
+
+#ifdef webserver  
   server.on("/", handleRoot);
 	server.on("/inline", []() {
 		server.send(200, "text/plain", "this works as well");
@@ -150,6 +154,7 @@ void setup() {
 	server.onNotFound(handleNotFound);
 	server.begin();
 	Serial.println("HTTP server started");
+#endif
 
   //v klidu 0, kladny pulz po dobu xx ms
   pinMode(interruptPin, INPUT);
@@ -182,6 +187,11 @@ void loop() {
       Serial.println(pCount);
       writePulseToFile(pCount);
       pulseCount=pCount;
+      if (! pulse.publish(pulseCount)) {
+        Serial.println("failed");
+      } else {
+        Serial.println("OK!");
+      }
     }
     if (subscription == &restart) {
       char *pNew = (char *)restart.lastread;
@@ -210,11 +220,17 @@ void loop() {
     if (heartBeat>1) {
       heartBeat = 0;
     }
+    if (! pulse.publish(pulseCount)) {
+      Serial.println("failed");
+    } else {
+      Serial.println("OK!");
+    }
   }
   
   if (pulseNow) {
     pulseNow=false;
     digitalWrite(ledPin, HIGH);
+    writePulseToFile(pulseCount);
     //Serial.println(millis());
     if (! pulse.publish(pulseCount)) {
       Serial.println("failed");
@@ -222,10 +238,19 @@ void loop() {
       Serial.println("OK!");
     }
   
-    writePulseToFile(pulseCount);
     digitalWrite(ledPin, LOW);
- 
   }
+  // ping the server to keep the mqtt connection alive
+  // NOT required if you are publishing once every KEEPALIVE seconds
+  /*
+  if(! mqtt.ping()) {
+    mqtt.disconnect();
+  }
+  */
+  
+#ifdef webserver
+  server.handleClient();
+#endif
 }
 
 // Function to connect and reconnect as necessary to the MQTT server.
