@@ -20,6 +20,7 @@ ESP8266WebServer server(80);
 #define AIO_KEY         "hanka12"
 
 uint32_t pulseCount     = 0;
+uint32_t pulseWidth     = 0;
 bool pulseNow           = false;
 uint32_t pulseMillisOld = 0;
 
@@ -37,6 +38,7 @@ Adafruit_MQTT_Client mqtt(&client, AIO_SERVER, AIO_SERVERPORT, AIO_USERNAME, AIO
 Adafruit_MQTT_Publish verSW               = Adafruit_MQTT_Publish(&mqtt, "/home/Srazkomer/esp05/VersionSW");
 Adafruit_MQTT_Publish hb                  = Adafruit_MQTT_Publish(&mqtt, "/home/Srazkomer/esp05/HeartBeat");
 Adafruit_MQTT_Publish pulse               = Adafruit_MQTT_Publish(&mqtt, "/home/Srazkomer/esp05/Pulse");
+Adafruit_MQTT_Publish pulseLength         = Adafruit_MQTT_Publish(&mqtt, "/home/Srazkomer/esp05/pulseLength");
 
 Adafruit_MQTT_Subscribe setupPulse    = Adafruit_MQTT_Subscribe(&mqtt, "/home/Srazkomer/esp05/setupPulse");
 Adafruit_MQTT_Subscribe restart       = Adafruit_MQTT_Subscribe(&mqtt, "/home/Srazkomer/esp05/restart");
@@ -100,7 +102,7 @@ extern "C" {
   #include "user_interface.h"
 }
 
-float versionSW                   = 0.61;
+float versionSW                   = 0.62;
 String versionSWString            = "Srazkomer v";
 byte heartBeat                    = 10;
 
@@ -158,7 +160,7 @@ void setup() {
 
   //v klidu 0, kladny pulz po dobu xx ms
   pinMode(interruptPin, INPUT);
-  attachInterrupt(digitalPinToInterrupt(interruptPin), pulseCountEvent, RISING);
+  attachInterrupt(digitalPinToInterrupt(interruptPin), pulseCountEvent, CHANGE);
   digitalWrite(ledPin, LOW);
   
   // open config file for reading
@@ -225,6 +227,13 @@ void loop() {
     } else {
       Serial.println("OK!");
     }
+
+    if (! pulse.publish(pulseWidth)) {
+      Serial.println("failed");
+    } else {
+      Serial.println("OK!");
+    }
+    
   }
   
   if (pulseNow) {
@@ -233,6 +242,12 @@ void loop() {
     writePulseToFile(pulseCount);
     //Serial.println(millis());
     if (! pulse.publish(pulseCount)) {
+      Serial.println("failed");
+    } else {
+      Serial.println("OK!");
+    }
+    
+    if (! pulse.publish(pulseWidth)) {
       Serial.println("failed");
     } else {
       Serial.println("OK!");
@@ -281,11 +296,16 @@ void MQTT_connect() {
 }
 
 void pulseCountEvent() {
-  if (millis() - pulseMillisOld>50) {
-    pulseCount++;
+  if (digitalRead(interruptPin)==LOW) {
+    pulseWidth = millis() - pulseMillisOld
+    if (pulseWidth>50) {
+      pulseCount++;
+      pulseMillisOld = millis();
+      Serial.println(pulseCount);
+      pulseNow=true;
+    }
+  else {
     pulseMillisOld = millis();
-    Serial.println(pulseCount);
-    pulseNow=true;
   }
 }
 
