@@ -102,9 +102,12 @@ extern "C" {
   #include "user_interface.h"
 }
 
-float versionSW                   = 0.62;
+float versionSW                   = 0.65;
 String versionSWString            = "Srazkomer v";
 byte heartBeat                    = 10;
+
+unsigned long readPulseFromFile(void);
+void writePulseToFile(uint32_t);
 
 void setup() {
   Serial.begin(SERIALSPEED);
@@ -228,13 +231,7 @@ void loop() {
       Serial.println("OK!");
     }
 
-    if (! pulse.publish(pulseWidth)) {
-      Serial.println("failed");
-    } else {
-      Serial.println("OK!");
-    }
-    
-  }
+ }
   
   if (pulseNow) {
     pulseNow=false;
@@ -247,7 +244,7 @@ void loop() {
       Serial.println("OK!");
     }
     
-    if (! pulse.publish(pulseWidth)) {
+    if (! pulseLength.publish(pulseWidth)) {
       Serial.println("failed");
     } else {
       Serial.println("OK!");
@@ -296,15 +293,14 @@ void MQTT_connect() {
 }
 
 void pulseCountEvent() {
-  if (digitalRead(interruptPin)==LOW) {
-    pulseWidth = millis() - pulseMillisOld
-    if (pulseWidth>50) {
+  if (digitalRead(interruptPin)==HIGH) { //dobezna
+    pulseWidth = millis() - pulseMillisOld;
+    if (pulseWidth>20) {
       pulseCount++;
-      pulseMillisOld = millis();
       Serial.println(pulseCount);
       pulseNow=true;
     }
-  else {
+  } else { //nabezna
     pulseMillisOld = millis();
   }
 }
