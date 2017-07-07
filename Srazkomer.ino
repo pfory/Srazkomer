@@ -102,7 +102,7 @@ extern "C" {
   #include "user_interface.h"
 }
 
-float versionSW                   = 0.65;
+float versionSW                   = 0.70;
 String versionSWString            = "Srazkomer v";
 byte heartBeat                    = 10;
 
@@ -161,9 +161,9 @@ void setup() {
 	Serial.println("HTTP server started");
 #endif
 
-  //v klidu 0, kladny pulz po dobu xx ms
+  //v klidu +3V, pulz vstup stahuje k zemi pres pulldown
   pinMode(interruptPin, INPUT);
-  attachInterrupt(digitalPinToInterrupt(interruptPin), pulseCountEvent, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(interruptPin), pulseCountEvent, FALLING);
   digitalWrite(ledPin, LOW);
   
   // open config file for reading
@@ -295,14 +295,17 @@ void MQTT_connect() {
 void pulseCountEvent() {
   if (digitalRead(interruptPin)==HIGH) { //dobezna
     pulseWidth = millis() - pulseMillisOld;
-    if (pulseWidth>20) {
+    if (pulseWidth>100 && pulseWidth<1000) {
       pulseCount++;
       Serial.println(pulseCount);
       pulseNow=true;
     }
-  } else { //nabezna
-    pulseMillisOld = millis();
+    attachInterrupt(digitalPinToInterrupt(interruptPin), pulseCountEvent, FALLING);
   }
+  if (digitalRead(interruptPin)==LOW) { //zacatek preklopeni
+    pulseMillisOld = millis();
+    attachInterrupt(digitalPinToInterrupt(interruptPin), pulseCountEvent, RISING);
+  } 
 }
 
 void writePulseToFile(uint32_t pocet) {
