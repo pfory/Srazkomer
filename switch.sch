@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="7.3.0">
+<eagle version="7.7.0">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
@@ -542,14 +542,14 @@ Grid 5.08 mm&lt;p&gt;
 <wire x1="10.16" y1="60.96" x2="7.62" y2="60.96" width="0.1524" layer="91"/>
 </segment>
 </net>
-<net name="N$4" class="0">
+<net name="GPIO2" class="0">
 <segment>
 <pinref part="SL1" gate="-1" pin="S"/>
 <pinref part="U$1" gate="G$1" pin="GPIO2"/>
 <wire x1="7.62" y1="66.04" x2="12.7" y2="66.04" width="0.1524" layer="91"/>
 </segment>
 </net>
-<net name="N$5" class="0">
+<net name="GPIO0" class="0">
 <segment>
 <pinref part="SL1" gate="-3" pin="S"/>
 <pinref part="U$1" gate="G$1" pin="GPIO0"/>

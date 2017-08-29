@@ -161,9 +161,9 @@ void setup() {
 	Serial.println("HTTP server started");
 #endif
 
-  //v klidu +3V, pulz vstup stahuje k zemi pres pulldown
+  //v klidu LOW, pulz HIGH
   pinMode(interruptPin, INPUT);
-  attachInterrupt(digitalPinToInterrupt(interruptPin), pulseCountEvent, FALLING);
+  attachInterrupt(digitalPinToInterrupt(interruptPin), pulseCountEvent, CHANGE);
   digitalWrite(ledPin, LOW);
   
   // open config file for reading
@@ -293,18 +293,16 @@ void MQTT_connect() {
 }
 
 void pulseCountEvent() {
-  if (digitalRead(interruptPin)==HIGH) { //dobezna
+  if (digitalRead(interruptPin)==LOW) { //nabezna
     pulseWidth = millis() - pulseMillisOld;
     if (pulseWidth>100 && pulseWidth<1000) {
       pulseCount++;
       Serial.println(pulseCount);
       pulseNow=true;
     }
-    attachInterrupt(digitalPinToInterrupt(interruptPin), pulseCountEvent, FALLING);
   }
-  if (digitalRead(interruptPin)==LOW) { //zacatek preklopeni
+  if (digitalRead(interruptPin)==HIGH) { //zacatek preklopeni
     pulseMillisOld = millis();
-    attachInterrupt(digitalPinToInterrupt(interruptPin), pulseCountEvent, RISING);
   } 
 }
 
