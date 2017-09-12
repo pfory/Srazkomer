@@ -102,7 +102,7 @@ extern "C" {
   #include "user_interface.h"
 }
 
-float versionSW                   = 0.70;
+float versionSW                   = 0.71;
 String versionSWString            = "Srazkomer v";
 byte heartBeat                    = 10;
 
@@ -295,7 +295,7 @@ void MQTT_connect() {
 void pulseCountEvent() {
   if (digitalRead(interruptPin)==LOW) { //nabezna
     pulseWidth = millis() - pulseMillisOld;
-    if (pulseWidth>100 && pulseWidth<1000) {
+    if (pulseWidth>20 && pulseWidth<1000) {
       pulseCount++;
       Serial.println(pulseCount);
       pulseNow=true;
