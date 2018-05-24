@@ -3,7 +3,7 @@
 #include <ESP8266WebServer.h>
 #include "Adafruit_MQTT.h"
 #include "Adafruit_MQTT_Client.h"
-#include <FS.h>
+// #include <FS.h>
 
 const char *ssid = "Datlovo";
 const char *password = "Nu6kMABmseYwbCoJ7LyG";
@@ -38,46 +38,45 @@ Adafruit_MQTT_Client mqtt(&client, AIO_SERVER, AIO_SERVERPORT, AIO_USERNAME, AIO
 Adafruit_MQTT_Publish verSW               = Adafruit_MQTT_Publish(&mqtt, "/home/Srazkomer/esp05/VersionSW");
 Adafruit_MQTT_Publish hb                  = Adafruit_MQTT_Publish(&mqtt, "/home/Srazkomer/esp05/HeartBeat");
 Adafruit_MQTT_Publish pulse               = Adafruit_MQTT_Publish(&mqtt, "/home/Srazkomer/esp05/Pulse");
-Adafruit_MQTT_Publish pulseLength         = Adafruit_MQTT_Publish(&mqtt, "/home/Srazkomer/esp05/pulseLength");
+// Adafruit_MQTT_Publish pulseLength         = Adafruit_MQTT_Publish(&mqtt, "/home/Srazkomer/esp05/pulseLength");
 
-Adafruit_MQTT_Subscribe setupPulse    = Adafruit_MQTT_Subscribe(&mqtt, "/home/Srazkomer/esp05/setupPulse");
+// Adafruit_MQTT_Subscribe setupPulse    = Adafruit_MQTT_Subscribe(&mqtt, "/home/Srazkomer/esp05/setupPulse");
 Adafruit_MQTT_Subscribe restart       = Adafruit_MQTT_Subscribe(&mqtt, "/home/Srazkomer/esp05/restart");
 
 #define SERIALSPEED 115200
 
 void MQTT_connect(void);
 
-File f;
+// File f;
 
 #ifdef webserver
-void handleRoot()
-{
+void handleRoot() {
   
-	char temp[450];
-	int sec = millis() / 1000;
-	int min = sec / 60;
-	int hr = min / 60;
+	// char temp[450];
+	// int sec = millis() / 1000;
+	// int min = sec / 60;
+	// int hr = min / 60;
 
-	snprintf(temp, 450,
-		"<html>\
-  <head>\
-    <meta http-equiv='refresh' content='5'/>\
-    <title>ESP8266 Temperatures</title>\
-    <style>\
-      body { background-color: #cccccc; font-family: Arial, Helvetica, Sans-Serif; Color: #000088; }\
-    </style>\
-  </head>\
-  <body>\
-    <h1>Teploty chata</h1>\
-    <p>Uptime: %02d:%02d:%02d</p>\
-	<p>Teplota venku: %02d.%01d&deg;C</p>\
-	<p>Teplota doma: %02d.%01d&deg;C</p>\
-  </body>\
-</html>",
+	// snprintf(temp, 450,
+		// "<html>\
+  // <head>\
+    // <meta http-equiv='refresh' content='5'/>\
+    // <title>ESP8266 Temperatures</title>\
+    // <style>\
+      // body { background-color: #cccccc; font-family: Arial, Helvetica, Sans-Serif; Color: #000088; }\
+    // </style>\
+  // </head>\
+  // <body>\
+    // <h1>Teploty chata</h1>\
+    // <p>Uptime: %02d:%02d:%02d</p>\
+	// <p>Teplota venku: %02d.%01d&deg;C</p>\
+	// <p>Teplota doma: %02d.%01d&deg;C</p>\
+  // </body>\
+// </html>",
 
-hr, min % 60, sec % 60, 0, 0
-);
-	server.send(200, "text/html", temp);
+// hr, min % 60, sec % 60, 0, 0
+// );
+	// server.send(200, "text/html", temp);
 }
 
 void handleNotFound() {
@@ -102,7 +101,7 @@ extern "C" {
   #include "user_interface.h"
 }
 
-float versionSW                   = 0.71;
+float versionSW                   = 0.8;
 String versionSWString            = "Srazkomer v";
 byte heartBeat                    = 10;
 
@@ -149,7 +148,7 @@ void setup() {
 	Serial.print("IP address: ");
 	Serial.println(WiFi.localIP());
   
-  SPIFFS.begin();
+  // SPIFFS.begin();
 
 #ifdef webserver  
   server.on("/", handleRoot);
@@ -167,13 +166,13 @@ void setup() {
   digitalWrite(ledPin, LOW);
   
   // open config file for reading
-  if (SPIFFS.exists("/config.ini")) {
-    pulseCount = readPulseFromFile();
-  } else {
-    writePulseToFile(0);
-  }
+  // if (SPIFFS.exists("/config.ini")) {
+    // pulseCount = readPulseFromFile();
+  // } else {
+    // writePulseToFile(0);
+  // }
 
-  mqtt.subscribe(&setupPulse);
+  // mqtt.subscribe(&setupPulse);
   mqtt.subscribe(&restart);
 }
 
@@ -185,19 +184,19 @@ void loop() {
 
   Adafruit_MQTT_Subscribe *subscription;
   while ((subscription = mqtt.readSubscription(5000))) {
-    if (subscription == &setupPulse) {
-      Serial.print(F("Set new pulse to: "));
-      char *pNew = (char *)setupPulse.lastread;
-      uint32_t pCount=atol(pNew); 
-      Serial.println(pCount);
-      writePulseToFile(pCount);
-      pulseCount=pCount;
-      if (! pulse.publish(pulseCount)) {
-        Serial.println("failed");
-      } else {
-        Serial.println("OK!");
-      }
-    }
+    // if (subscription == &setupPulse) {
+      // Serial.print(F("Set new pulse to: "));
+      // char *pNew = (char *)setupPulse.lastread;
+      // uint32_t pCount=atol(pNew); 
+      // Serial.println(pCount);
+      // writePulseToFile(pCount);
+      // pulseCount=pCount;
+      // if (! pulse.publish(pulseCount)) {
+        // Serial.println("failed");
+      // } else {
+        // Serial.println("OK!");
+      // }
+    // }
     if (subscription == &restart) {
       char *pNew = (char *)restart.lastread;
       uint32_t pPassw=atol(pNew); 
@@ -225,30 +224,31 @@ void loop() {
     if (heartBeat>1) {
       heartBeat = 0;
     }
-    if (! pulse.publish(pulseCount)) {
-      Serial.println("failed");
-    } else {
-      Serial.println("OK!");
-    }
+    // if (! pulse.publish(pulseCount)) {
+      // Serial.println("failed");
+    // } else {
+      // Serial.println("OK!");
+    // }
 
- }
+  }
   
-  if (pulseNow) {
-    pulseNow=false;
+  if (pulseCount>0 && pulseCount < 60) {
+    // pulseNow=false;
     digitalWrite(ledPin, HIGH);
-    writePulseToFile(pulseCount);
+    // writePulseToFile(pulseCount);
     //Serial.println(millis());
     if (! pulse.publish(pulseCount)) {
       Serial.println("failed");
     } else {
+      pulseCount = 0;
       Serial.println("OK!");
     }
     
-    if (! pulseLength.publish(pulseWidth)) {
-      Serial.println("failed");
-    } else {
-      Serial.println("OK!");
-    }
+    // if (! pulseLength.publish(pulseWidth)) {
+      // Serial.println("failed");
+    // } else {
+      // Serial.println("OK!");
+    // }
   
     digitalWrite(ledPin, LOW);
   }
@@ -293,44 +293,45 @@ void MQTT_connect() {
 }
 
 void pulseCountEvent() {
-  if (digitalRead(interruptPin)==LOW) { //nabezna
-    pulseWidth = millis() - pulseMillisOld;
-    if (pulseWidth>20 && pulseWidth<1000) {
-      pulseCount++;
-      Serial.println(pulseCount);
-      pulseNow=true;
-    }
-  }
-  if (digitalRead(interruptPin)==HIGH) { //zacatek preklopeni
-    pulseMillisOld = millis();
-  } 
+  pulseCount++;
+  // if (digitalRead(interruptPin)==LOW) { //nabezna
+    // pulseWidth = millis() - pulseMillisOld;
+    // if (pulseWidth>20 && pulseWidth<1000) {
+      // pulseCount++;
+      // Serial.println(pulseCount);
+      // pulseNow=true;
+    // }
+  // }
+  // if (digitalRead(interruptPin)==HIGH) { //zacatek preklopeni
+    // pulseMillisOld = millis();
+  // } 
 }
 
-void writePulseToFile(uint32_t pocet) {
-  f = SPIFFS.open("/config.ini", "w");
-  if (!f) {
-    Serial.println("file open failed");
-  } else {
-    Serial.print("Zapisuji pocet pulzu ");
-    Serial.print(pocet);
-    Serial.print(" do souboru config.ini.");
-    f.print(pocet);
-    f.println();
-    f.close();
-  }
-}
+// void writePulseToFile(uint32_t pocet) {
+  // f = SPIFFS.open("/config.ini", "w");
+  // if (!f) {
+    // Serial.println("file open failed");
+  // } else {
+    // Serial.print("Zapisuji pocet pulzu ");
+    // Serial.print(pocet);
+    // Serial.print(" do souboru config.ini.");
+    // f.print(pocet);
+    // f.println();
+    // f.close();
+  // }
+// }
 
-unsigned long readPulseFromFile() {
-  f = SPIFFS.open("/config.ini", "r");
-  if (!f) {
-    Serial.println("file open failed");
-    return 0;
-  } else {
-    Serial.println("====== Reading config from SPIFFS file =======");
-    String s = f.readStringUntil('\n');
-    Serial.print("Pocet pulzu z config.ini:");
-    Serial.println(s);
-    f.close();
-    return s.toInt();
-  }
-}
+// unsigned long readPulseFromFile() {
+  // f = SPIFFS.open("/config.ini", "r");
+  // if (!f) {
+    // Serial.println("file open failed");
+    // return 0;
+  // } else {
+    // Serial.println("====== Reading config from SPIFFS file =======");
+    // String s = f.readStringUntil('\n');
+    // Serial.print("Pocet pulzu z config.ini:");
+    // Serial.println(s);
+    // f.close();
+    // return s.toInt();
+  // }
+// }
