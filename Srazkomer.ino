@@ -29,7 +29,7 @@ WiFiClient client;
 const byte ledPin       = 0;
 const byte interruptPin = 2;
 
-unsigned long sendDelay = 60000;
+unsigned long sendDelay = 600000;
 unsigned long lastSend  = sendDelay * -1;
 
 Adafruit_MQTT_Client mqtt(&client, AIO_SERVER, AIO_SERVERPORT, AIO_USERNAME, AIO_KEY);
