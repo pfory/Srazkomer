@@ -105,8 +105,8 @@ float versionSW                   = 0.8;
 String versionSWString            = "Srazkomer v";
 byte heartBeat                    = 10;
 
-unsigned long readPulseFromFile(void);
-void writePulseToFile(uint32_t);
+// unsigned long readPulseFromFile(void);
+// void writePulseToFile(uint32_t);
 
 void setup() {
   Serial.begin(SERIALSPEED);
