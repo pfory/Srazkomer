@@ -7,6 +7,20 @@
 #include <ArduinoOTA.h>
 // #include <FS.h>
 
+#define verbose
+#ifdef verbose
+ #define DEBUG_PRINT(x)         Serial.print (x)
+ #define DEBUG_PRINTDEC(x)      Serial.print (x, DEC)
+ #define DEBUG_PRINTLN(x)       Serial.println (x)
+ #define DEBUG_PRINTF(x, y)     Serial.printf (x, y)
+ #define PORTSPEED 115200
+#else
+ #define DEBUG_PRINT(x)
+ #define DEBUG_PRINTDEC(x)
+ #define DEBUG_PRINTLN(x)
+ #define DEBUG_PRINTF(x, y)
+#endif 
+
 //#define webserver +13 724 flash +3 812 memory
 #ifdef webserver
 ESP8266WebServer server(80);
@@ -18,17 +32,14 @@ ESP8266WebServer server(80);
 #define AIO_USERNAME    "datel"
 #define AIO_KEY         "hanka12"
 
-uint32_t pulseCount     = 0;
-uint32_t pulseWidth     = 0;
-bool pulseNow           = false;
-uint32_t pulseMillisOld = 0;
+unsigned int volatile pulseCount     = 0;
+bool pulseNow                        = false;
 
 WiFiClient client;
 
-const byte ledPin       = 0;
-const byte interruptPin = 2;
+const byte interruptPin = D5;
 
-unsigned long sendDelay = 600000;
+unsigned long sendDelay = 60000;
 unsigned long lastSend  = sendDelay * -1;
 
 Adafruit_MQTT_Client mqtt(&client, AIO_SERVER, AIO_SERVERPORT, AIO_USERNAME, AIO_KEY);
@@ -112,12 +123,12 @@ byte heartBeat                    = 10;
 
 void setup() {
   Serial.begin(SERIALSPEED);
-  Serial.print(versionSWString);
-  Serial.println(versionSW);
-  pinMode(ledPin, OUTPUT);
-  digitalWrite(ledPin, HIGH);
+  DEBUG_PRINT(versionSWString);
+  DEBUG_PRINTLN(versionSW);
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, LOW);
   
-  Serial.println(ESP.getResetReason());
+  DEBUG_PRINTLN(ESP.getResetReason());
   if (ESP.getResetReason()=="Software/System restart") {
     heartBeat=11;
   } else if (ESP.getResetReason()=="Power on") {
@@ -141,11 +152,11 @@ void setup() {
     ESP.reset();
     delay(5000);
   }
-	Serial.println("");
-	Serial.print("Connected to ");
-	Serial.println(ssid);
-	Serial.print("IP address: ");
-	Serial.println(WiFi.localIP());
+	// DEBUG_PRINTLN("");
+	// DEBUG_PRINT("Connected to ");
+	// DEBUG_PRINTLN(ssid);
+	DEBUG_PRINT("IP address: ");
+	DEBUG_PRINTLN(WiFi.localIP());
   
   // SPIFFS.begin();
 
@@ -156,13 +167,13 @@ void setup() {
 	});
 	server.onNotFound(handleNotFound);
 	server.begin();
-	Serial.println("HTTP server started");
+	DEBUG_PRINTLN("HTTP server started");
 #endif
 
   //v klidu LOW, pulz HIGH
   pinMode(interruptPin, INPUT);
-  attachInterrupt(digitalPinToInterrupt(interruptPin), pulseCountEvent, CHANGE);
-  digitalWrite(ledPin, LOW);
+  attachInterrupt(digitalPinToInterrupt(interruptPin), pulseCountEvent, FALLING);
+  digitalWrite(LED_BUILTIN, HIGH);
   
   // open config file for reading
   // if (SPIFFS.exists("/config.ini")) {
@@ -232,26 +243,26 @@ void loop() {
   Adafruit_MQTT_Subscribe *subscription;
   while ((subscription = mqtt.readSubscription(5000))) {
     // if (subscription == &setupPulse) {
-      // Serial.print(F("Set new pulse to: "));
+      // DEBUG_PRINT(F("Set new pulse to: "));
       // char *pNew = (char *)setupPulse.lastread;
       // uint32_t pCount=atol(pNew); 
-      // Serial.println(pCount);
+      // DEBUG_PRINTLN(pCount);
       // writePulseToFile(pCount);
       // pulseCount=pCount;
       // if (! pulse.publish(pulseCount)) {
-        // Serial.println("failed");
+        // DEBUG_PRINTLN("failed");
       // } else {
-        // Serial.println("OK!");
+        // DEBUG_PRINTLN("OK!");
       // }
     // }
     if (subscription == &restart) {
       char *pNew = (char *)restart.lastread;
       uint32_t pPassw=atol(pNew); 
       if (pPassw==650419) {
-        Serial.print(F("Restart ESP now!"));
+        DEBUG_PRINT(F("Restart ESP now!"));
         ESP.restart();
       } else {
-        Serial.print(F("Wrong password."));
+        DEBUG_PRINT(F("Wrong password."));
       }
     }
   }
@@ -259,45 +270,52 @@ void loop() {
   if (millis() - lastSend>=sendDelay) {
     lastSend = millis();
     if (! verSW.publish(versionSW)) {
-      Serial.println("failed");
+      DEBUG_PRINTLN("Send version SW failed");
     } else {
-      Serial.println("OK!");
+      DEBUG_PRINTLN("Send version SW OK!");
     }
     if (! hb.publish(heartBeat++)) {
-      Serial.println("failed");
+      DEBUG_PRINTLN("Send HB failed");
     } else {
-      Serial.println("OK!");
+      DEBUG_PRINTLN("Send HB OK!");
     }
     if (heartBeat>1) {
       heartBeat = 0;
     }
     // if (! pulse.publish(pulseCount)) {
-      // Serial.println("failed");
+      // DEBUG_PRINTLN("failed");
     // } else {
-      // Serial.println("OK!");
+      // DEBUG_PRINTLN("OK!");
     // }
 
   }
   
   if (pulseCount>0 && pulseCount < 60) {
     // pulseNow=false;
-    digitalWrite(ledPin, HIGH);
+    digitalWrite(LED_BUILTIN, LOW);
     // writePulseToFile(pulseCount);
-    //Serial.println(millis());
+    //DEBUG_PRINTLN(millis());
     if (! pulse.publish(pulseCount)) {
-      Serial.println("failed");
+      DEBUG_PRINTLN("Send pulse failed");
     } else {
       pulseCount = 0;
-      Serial.println("OK!");
+      DEBUG_PRINTLN("Send pulse OK!");
     }
+    if (! pulse.publish(0)) {
+      DEBUG_PRINTLN("Send pulse failed");
+    } else {
+      pulseCount = 0;
+      DEBUG_PRINTLN("Send pulse OK!");
+    }
+
     
     // if (! pulseLength.publish(pulseWidth)) {
-      // Serial.println("failed");
+      // DEBUG_PRINTLN("failed");
     // } else {
-      // Serial.println("OK!");
+      // DEBUG_PRINTLN("OK!");
     // }
   
-    digitalWrite(ledPin, LOW);
+    digitalWrite(LED_BUILTIN, HIGH);
   }
   // ping the server to keep the mqtt connection alive
   // NOT required if you are publishing once every KEEPALIVE seconds
@@ -322,12 +340,12 @@ void MQTT_connect() {
     return;
   }
 
-  Serial.print("Connecting to MQTT... ");
+  DEBUG_PRINT("Connecting to MQTT... ");
 
   uint8_t retries = 3;
   while ((ret = mqtt.connect()) != 0) { // connect will return 0 for connected
-       Serial.println(mqtt.connectErrorString(ret));
-       Serial.println("Retrying MQTT connection in 5 seconds...");
+       DEBUG_PRINTLN(mqtt.connectErrorString(ret));
+       DEBUG_PRINTLN("Retrying MQTT connection in 5 seconds...");
        mqtt.disconnect();
        delay(5000);  // wait 5 seconds
        retries--;
@@ -336,32 +354,24 @@ void MQTT_connect() {
          while (1);
        }
   }
-  Serial.println("MQTT Connected!");
+  DEBUG_PRINTLN("MQTT Connected!");
 }
 
 void pulseCountEvent() {
+  digitalWrite(LED_BUILTIN, LOW);
   pulseCount++;
-  // if (digitalRead(interruptPin)==LOW) { //nabezna
-    // pulseWidth = millis() - pulseMillisOld;
-    // if (pulseWidth>20 && pulseWidth<1000) {
-      // pulseCount++;
-      // Serial.println(pulseCount);
-      // pulseNow=true;
-    // }
-  // }
-  // if (digitalRead(interruptPin)==HIGH) { //zacatek preklopeni
-    // pulseMillisOld = millis();
-  // } 
+  // Serial.print(pulseCount);
+  digitalWrite(LED_BUILTIN, HIGH);
 }
 
 // void writePulseToFile(uint32_t pocet) {
   // f = SPIFFS.open("/config.ini", "w");
   // if (!f) {
-    // Serial.println("file open failed");
+    // DEBUG_PRINTLN("file open failed");
   // } else {
-    // Serial.print("Zapisuji pocet pulzu ");
-    // Serial.print(pocet);
-    // Serial.print(" do souboru config.ini.");
+    // DEBUG_PRINT("Zapisuji pocet pulzu ");
+    // DEBUG_PRINT(pocet);
+    // DEBUG_PRINT(" do souboru config.ini.");
     // f.print(pocet);
     // f.println();
     // f.close();
@@ -371,13 +381,13 @@ void pulseCountEvent() {
 // unsigned long readPulseFromFile() {
   // f = SPIFFS.open("/config.ini", "r");
   // if (!f) {
-    // Serial.println("file open failed");
+    // DEBUG_PRINTLN("file open failed");
     // return 0;
   // } else {
-    // Serial.println("====== Reading config from SPIFFS file =======");
+    // DEBUG_PRINTLN("====== Reading config from SPIFFS file =======");
     // String s = f.readStringUntil('\n');
-    // Serial.print("Pocet pulzu z config.ini:");
-    // Serial.println(s);
+    // DEBUG_PRINT("Pocet pulzu z config.ini:");
+    // DEBUG_PRINTLN(s);
     // f.close();
     // return s.toInt();
   // }
