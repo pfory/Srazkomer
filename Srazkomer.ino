@@ -114,7 +114,7 @@ extern "C" {
   #include "user_interface.h"
 }
 
-float versionSW                   = 0.8;
+float versionSW                   = 0.81;
 String versionSWString            = "Srazkomer v";
 byte heartBeat                    = 10;
 
@@ -282,32 +282,19 @@ void loop() {
     if (heartBeat>1) {
       heartBeat = 0;
     }
-    // if (! pulse.publish(pulseCount)) {
-      // DEBUG_PRINTLN("failed");
-    // } else {
-      // DEBUG_PRINTLN("OK!");
-    // }
-
-  }
   
-  if (pulseCount>0 && pulseCount < 60) {
-    // pulseNow=false;
-    digitalWrite(LED_BUILTIN, LOW);
-    // writePulseToFile(pulseCount);
-    //DEBUG_PRINTLN(millis());
-    if (! pulse.publish(pulseCount)) {
-      DEBUG_PRINTLN("Send pulse failed");
-    } else {
-      pulseCount = 0;
-      DEBUG_PRINTLN("Send pulse OK!");
+    if (pulseCount>0 && pulseCount < 60) {
+      // pulseNow=false;
+      digitalWrite(LED_BUILTIN, LOW);
+      // writePulseToFile(pulseCount);
+      //DEBUG_PRINTLN(millis());
+      if (! pulse.publish(pulseCount)) {
+        DEBUG_PRINTLN("Send pulse failed");
+      } else {
+        pulseCount = 0;
+        DEBUG_PRINTLN("Send pulse OK!");
+      }
     }
-    if (! pulse.publish(0)) {
-      DEBUG_PRINTLN("Send pulse failed");
-    } else {
-      pulseCount = 0;
-      DEBUG_PRINTLN("Send pulse OK!");
-    }
-
     
     // if (! pulseLength.publish(pulseWidth)) {
       // DEBUG_PRINTLN("failed");
