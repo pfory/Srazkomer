@@ -315,6 +315,7 @@ void loop() {
 #ifdef webserver
   server.handleClient();
 #endif
+  ArduinoOTA.handle();
 }
 
 // Function to connect and reconnect as necessary to the MQTT server.
