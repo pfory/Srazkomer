@@ -53,6 +53,11 @@ Adafruit_MQTT_Publish pulse               = Adafruit_MQTT_Publish(&mqtt, "/home/
 // Adafruit_MQTT_Subscribe setupPulse    = Adafruit_MQTT_Subscribe(&mqtt, "/home/Srazkomer/esp05/setupPulse");
 Adafruit_MQTT_Subscribe restart       = Adafruit_MQTT_Subscribe(&mqtt, "/home/Srazkomer/esp05/restart");
 
+
+IPAddress _ip           = IPAddress(192, 168, 1, 107);
+IPAddress _gw           = IPAddress(192, 168, 1, 1);
+IPAddress _sn           = IPAddress(255, 255, 255, 0);
+
 #define SERIALSPEED 115200
 
 void MQTT_connect(void);
@@ -114,7 +119,7 @@ extern "C" {
   #include "user_interface.h"
 }
 
-float versionSW                   = 0.81;
+float versionSW                   = 0.82;
 String versionSWString            = "Srazkomer v";
 byte heartBeat                    = 10;
 
@@ -145,8 +150,8 @@ void setup() {
     heartBeat=17;
   }
   
-  
-  if (!wifiManager.autoConnect("AutoConnectAP", "password")) {
+  wifiManager.setSTAStaticIPConfig(_ip, _gw, _sn);
+  if (!wifiManager.autoConnect("Srazkomer", "password")) {
     DEBUG_PRINTLN("failed to connect, we should reset as see if it connects");
     delay(3000);
     ESP.reset();
