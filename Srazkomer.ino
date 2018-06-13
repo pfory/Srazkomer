@@ -124,7 +124,7 @@ extern "C" {
 
 float versionSW                   = 0.83;
 String versionSWString            = "Srazkomer v";
-uint32_t heartBeat                = 10;
+uint32_t heartBeat                = 0;
 
 // unsigned long readPulseFromFile(void);
 // void writePulseToFile(uint32_t);
@@ -138,19 +138,19 @@ void setup() {
   
   DEBUG_PRINTLN(ESP.getResetReason());
   if (ESP.getResetReason()=="Software/System restart") {
-    heartBeat=11;
+    heartBeat=1;
   } else if (ESP.getResetReason()=="Power on") {
-    heartBeat=12;
+    heartBeat=2;
   } else if (ESP.getResetReason()=="External System") {
-    heartBeat=13;
+    heartBeat=3;
   } else if (ESP.getResetReason()=="Hardware Watchdog") {
-    heartBeat=14;
+    heartBeat=4;
   } else if (ESP.getResetReason()=="Exception") {
-    heartBeat=15;
+    heartBeat=5;
   } else if (ESP.getResetReason()=="Software Watchdog") {
-    heartBeat=16;
+    heartBeat=6;
   } else if (ESP.getResetReason()=="Deep-Sleep Wake") {
-    heartBeat=17;
+    heartBeat=7;
   }
   
   wifiManager.setSTAStaticIPConfig(_ip, _gw, _sn);
@@ -282,11 +282,6 @@ void loop() {
     } else {
       DEBUG_PRINTLN("Send version SW OK!");
     }
-    if (! hb.publish(heartBeat)) {
-      DEBUG_PRINTLN("Send HB failed");
-    } else {
-      DEBUG_PRINTLN("Send HB OK!");
-    }
   
     if (pulseCount>0 && pulseCount < 60) {
       // pulseNow=false;
@@ -319,6 +314,11 @@ void loop() {
   
   if (millis() - milisLastRunMinOld > 60000) {
     milisLastRunMinOld = millis();
+    if (! hb.publish(heartBeat)) {
+      DEBUG_PRINTLN("Send HB failed");
+    } else {
+      DEBUG_PRINTLN("Send HB OK!");
+    }
     heartBeat++;
   }
   
