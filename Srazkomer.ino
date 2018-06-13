@@ -32,8 +32,11 @@ ESP8266WebServer server(80);
 #define AIO_USERNAME    "datel"
 #define AIO_KEY         "hanka12"
 
-unsigned int volatile pulseCount     = 0;
-bool pulseNow                        = false;
+unsigned int volatile pulseCount          = 0;
+bool pulseNow                             = false;
+
+unsigned long milisLastRunMinOld          = 0;
+
 
 WiFiClient client;
 
@@ -119,9 +122,9 @@ extern "C" {
   #include "user_interface.h"
 }
 
-float versionSW                   = 0.82;
+float versionSW                   = 0.83;
 String versionSWString            = "Srazkomer v";
-byte heartBeat                    = 10;
+uint32_t heartBeat                = 10;
 
 // unsigned long readPulseFromFile(void);
 // void writePulseToFile(uint32_t);
@@ -279,13 +282,10 @@ void loop() {
     } else {
       DEBUG_PRINTLN("Send version SW OK!");
     }
-    if (! hb.publish(heartBeat++)) {
+    if (! hb.publish(heartBeat)) {
       DEBUG_PRINTLN("Send HB failed");
     } else {
       DEBUG_PRINTLN("Send HB OK!");
-    }
-    if (heartBeat>1) {
-      heartBeat = 0;
     }
   
     if (pulseCount>0 && pulseCount < 60) {
@@ -316,6 +316,11 @@ void loop() {
     mqtt.disconnect();
   }
   */
+  
+  if (millis() - milisLastRunMinOld > 60000) {
+    milisLastRunMinOld = millis();
+    heartBeat++;
+  }
   
 #ifdef webserver
   server.handleClient();
