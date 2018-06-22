@@ -122,7 +122,7 @@ extern "C" {
   #include "user_interface.h"
 }
 
-float versionSW                   = 0.83;
+float versionSW                   = 0.84;
 String versionSWString            = "Srazkomer v";
 uint32_t heartBeat                = 0;
 
@@ -294,7 +294,10 @@ void loop() {
         pulseCount = 0;
         DEBUG_PRINTLN("Send pulse OK!");
       }
+    } else {
+        pulseCount = 0;
     }
+    
     
     // if (! pulseLength.publish(pulseWidth)) {
       // DEBUG_PRINTLN("failed");
