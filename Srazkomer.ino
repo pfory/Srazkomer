@@ -122,7 +122,7 @@ extern "C" {
   #include "user_interface.h"
 }
 
-float versionSW                   = 0.85;
+float versionSW                   = 0.86;
 String versionSWString            = "Srazkomer v";
 uint32_t heartBeat                = 0;
 
@@ -176,8 +176,10 @@ void setup() {
 #endif
 
   //v klidu LOW, pulz HIGH
+  /*It have the output state light, if output high level, the lights are off. if output low level ,it on.
+  If it covered,it will output high level;otherwise it output low level.*/
   pinMode(interruptPin, INPUT);
-  attachInterrupt(digitalPinToInterrupt(interruptPin), pulseCountEvent, FALLING);
+  attachInterrupt(digitalPinToInterrupt(interruptPin), pulseCountEvent, RISING);
   digitalWrite(LED_BUILTIN, HIGH);
   
   mqtt.subscribe(&restart);
@@ -257,7 +259,7 @@ void loop() {
       DEBUG_PRINTLN("Send version SW OK!");
     }
   
-    if (pulseCount>0 && pulseCount < 60) {
+    if (pulseCount>0) {
       digitalWrite(LED_BUILTIN, LOW);
       if (! pulse.publish(pulseCount)) {
         DEBUG_PRINTLN("Send pulse failed");
