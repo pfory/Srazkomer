@@ -213,7 +213,6 @@ void setup() {
   If it covered,it will output high level;otherwise it output low level.*/
   pinMode(interruptPin, INPUT);
   attachInterrupt(digitalPinToInterrupt(interruptPin), pulseCountEvent, RISING);
-  digitalWrite(LED_BUILTIN, HIGH);
   
   mqtt.subscribe(&restart);
   
@@ -293,7 +292,7 @@ void loop() {
     }
   
     if (pulseCount>0) {
-      digitalWrite(LED_BUILTIN, LOW);
+      digitalWrite(BUILTIN_LED, LOW);
       if (! pulse.publish(pulseCount)) {
         DEBUG_PRINTLN("Send pulse failed");
       } else {
@@ -303,7 +302,7 @@ void loop() {
     } else {
         pulseCount = 0;
     }
-    digitalWrite(LED_BUILTIN, HIGH);
+    digitalWrite(BUILTIN_LED, HIGH);
   }
   // ping the server to keep the mqtt connection alive
   // NOT required if you are publishing once every KEEPALIVE seconds
@@ -357,10 +356,10 @@ void MQTT_connect() {
 }
 
 void pulseCountEvent() {
-  digitalWrite(LED_BUILTIN, LOW);
+  digitalWrite(BUILTIN_LED, LOW);
   if (millis() - lastPulseMillis > 5000) {
     lastPulseMillis = millis();
     pulseCount++;
   }
-  digitalWrite(LED_BUILTIN, HIGH);
+  digitalWrite(BUILTIN_LED, HIGH);
 }
