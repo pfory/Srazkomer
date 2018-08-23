@@ -72,7 +72,6 @@ IPAddress _ip           = IPAddress(192, 168, 1, 107);
 IPAddress _gw           = IPAddress(192, 168, 1, 1);
 IPAddress _sn           = IPAddress(255, 255, 255, 0);
 
-#define SERIALSPEED 115200
 
 void MQTT_connect(void);
 
@@ -148,7 +147,9 @@ String versionSWString            = "Srazkomer v";
 uint32_t heartBeat                = 0;
 
 void setup() {
-  Serial.begin(SERIALSPEED);
+#ifdef verbose
+  Serial.begin(PORTSPEED);
+#endif
   DEBUG_PRINT(versionSWString);
   DEBUG_PRINTLN(versionSW);
   //set led pin as output
