@@ -142,7 +142,7 @@ void configModeCallback (WiFiManager *myWiFiManager) {
   ticker.attach(0.2, tick);
 }
 
-float versionSW                   = 0.89;
+float versionSW                   = 0.90;
 String versionSWString            = "Srazkomer v";
 uint32_t heartBeat                = 0;
 
@@ -179,6 +179,7 @@ void setup() {
   WiFiManager wifiManager;
   //reset settings - for testing
   //wifiManager.resetSettings();
+  wifiManager.setConnectTimeout(600); //5min
 
   //set callback that gets called when connecting to previous WiFi fails, and enters Access Point mode
   wifiManager.setAPCallback(configModeCallback);
