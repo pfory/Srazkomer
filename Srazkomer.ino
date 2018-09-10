@@ -46,8 +46,6 @@ unsigned int volatile pulseCount          = 0;
 unsigned long lastPulseMillis             = 0;
 bool pulseNow                             = false;
 
-unsigned long milisLastRunMinOld          = 0;
-
 
 WiFiClient client;
 
@@ -62,6 +60,7 @@ Adafruit_MQTT_Client mqtt(&client, AIO_SERVER, AIO_SERVERPORT, AIO_USERNAME, AIO
 Adafruit_MQTT_Publish verSW               = Adafruit_MQTT_Publish(&mqtt, "/home/Srazkomer/esp05/VersionSW");
 Adafruit_MQTT_Publish hb                  = Adafruit_MQTT_Publish(&mqtt, "/home/Srazkomer/esp05/HeartBeat");
 Adafruit_MQTT_Publish pulse               = Adafruit_MQTT_Publish(&mqtt, "/home/Srazkomer/esp05/Pulse");
+Adafruit_MQTT_Publish napeti              = Adafruit_MQTT_Publish(&mqtt, "/home/Srazkomer/esp05/Napeti");
 // Adafruit_MQTT_Publish pulseLength         = Adafruit_MQTT_Publish(&mqtt, "/home/Srazkomer/esp05/pulseLength");
 
 // Adafruit_MQTT_Subscribe setupPulse    = Adafruit_MQTT_Subscribe(&mqtt, "/home/Srazkomer/esp05/setupPulse");
@@ -77,6 +76,7 @@ void MQTT_connect(void);
 
 WiFiManager wifiManager;
 
+ADC_MODE(ADC_VCC);
 
 // File f;
 
@@ -142,7 +142,7 @@ void configModeCallback (WiFiManager *myWiFiManager) {
   ticker.attach(0.2, tick);
 }
 
-float versionSW                   = 0.90;
+float versionSW                   = 0.91;
 String versionSWString            = "Srazkomer v";
 uint32_t heartBeat                = 0;
 
@@ -156,7 +156,7 @@ void setup() {
   pinMode(BUILTIN_LED, OUTPUT);
   // start ticker with 0.5 because we start in AP mode and try to connect
   ticker.attach(0.6, tick);
-  
+
   DEBUG_PRINTLN(ESP.getResetReason());
   if (ESP.getResetReason()=="Software/System restart") {
     heartBeat=1;
@@ -292,7 +292,18 @@ void loop() {
     } else {
       DEBUG_PRINTLN("Send version SW OK!");
     }
-  
+    if (! hb.publish(heartBeat)) {
+      DEBUG_PRINTLN("Send HB failed");
+    } else {
+      DEBUG_PRINTLN("Send HB OK!");
+    }
+    heartBeat++;
+    if (! napeti.publish(ESP.getVcc())) {
+      DEBUG_PRINTLN("Send napeti failed");
+    } else {
+      DEBUG_PRINTLN("Send napeti OK!");
+    }
+
     if (pulseCount>0) {
       digitalWrite(BUILTIN_LED, LOW);
       if (! pulse.publish(pulseCount)) {
@@ -314,16 +325,7 @@ void loop() {
   }
   */
   
-  if (millis() - milisLastRunMinOld > 60000) {
-    milisLastRunMinOld = millis();
-    if (! hb.publish(heartBeat)) {
-      DEBUG_PRINTLN("Send HB failed");
-    } else {
-      DEBUG_PRINTLN("Send HB OK!");
-    }
-    heartBeat++;
-  }
-  
+ 
 #ifdef webserver
   server.handleClient();
 #endif
