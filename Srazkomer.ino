@@ -1,3 +1,5 @@
+//WEMOS D1 mini
+
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 #include <WiFiManager.h> 
@@ -142,7 +144,7 @@ void configModeCallback (WiFiManager *myWiFiManager) {
   ticker.attach(0.2, tick);
 }
 
-float versionSW                   = 0.91;
+float versionSW                   = 0.92;
 String versionSWString            = "Srazkomer v";
 uint32_t heartBeat                = 0;
 
@@ -261,8 +263,7 @@ void setup() {
 
   DEBUG_PRINTLN(" Ready");
   ticker.detach();
-  //keep LED on
-  digitalWrite(BUILTIN_LED, LOW);
+  digitalWrite(BUILTIN_LED, HIGH);
 }
 
 void loop() {
