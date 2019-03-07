@@ -2,4 +2,4 @@
 upravit verzi XXXX
 spustit v příkazové řádce
 
-python /home/$USER/.arduino15/packages/esp8266/hardware/esp8266/2.4.1/tools/espota.py -i 192.168.1.107 -p 8266 --auth=password -f /home/pi/SrazkomerXXXX.ino.bin 
+sudo python /root/.arduino15/packages/esp8266/hardware/esp8266/2.4.2/tools/espota.py -i 192.168.1.107 -p 8266 --auth=password -f /home/pi/Srazkomer.ino.d1_mini.bin
