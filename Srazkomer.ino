@@ -1,7 +1,7 @@
 //SRAZKOMER
 /*
 */
-//Wemos D1 R2 & mini
+//Wemos D1 R2 & mini !!!!!!!!!! SPIFSS 1M !!!!!!!!!!!!
 
 
 #include <ESP8266WiFi.h>
@@ -87,7 +87,7 @@ const unsigned long   sendDelay             = 5000; //in ms
 const unsigned long   sendStatDelay         = 60000;
 
 
-float versionSW                   = 1.01;
+float versionSW                   = 1.02;
 String versionSWString            = "Srazkomer v";
 uint32_t heartBeat                = 0;
 
