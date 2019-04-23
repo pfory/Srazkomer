@@ -50,6 +50,7 @@ time_t getNtpTime();
  #define DEBUG_PRINTLN(x)       Serial.println (x)
  #define DEBUG_PRINTF(x, y)     Serial.printf (x, y)
  #define PORTSPEED 115200
+ #define SERIAL_BEGIN           Serial.begin(PORTSPEED)
 #else
  #define DEBUG_PRINT(x)
  #define DEBUG_PRINTDEC(x)
