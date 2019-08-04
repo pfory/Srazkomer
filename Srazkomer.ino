@@ -87,7 +87,7 @@ const unsigned long   sendDelay             = 5000; //in ms
 const unsigned long   sendStatDelay         = 60000;
 
 
-float versionSW                   = 1.02;
+float versionSW                   = 1.1;
 String versionSWString            = "Srazkomer v";
 uint32_t heartBeat                = 0;
 
@@ -530,11 +530,13 @@ bool sendDataHA() {
   SenderClass sender;
   
   sender.add("Pulse", pulseCount );
-  pulseCount = 0;
 
   DEBUG_PRINTLN(F("Calling MQTT"));
 
-  sender.sendMQTT(mqtt_server, mqtt_port, mqtt_username, mqtt_key, mqtt_base);
+  if (sender.sendMQTT(mqtt_server, mqtt_port, mqtt_username, mqtt_key, mqtt_base)) {
+      pulseCount = 0;
+  }
+  
   digitalWrite(BUILTIN_LED, HIGH);
   interrupts();
   return true;
