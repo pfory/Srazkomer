@@ -91,7 +91,7 @@ const unsigned long   sendStatDelay         = 60000;
 #define mqtt_password           "hanka12"                   // Password for mqtt, not required if auth is disabled
 #define mqtt_topic              "/home/Srazkomer/esp05/restart"           // here you have to set the topic for mqtt
 
-float versionSW                   = 1.2;
+float versionSW                   = 1.21;
 String versionSWString            = "Srazkomer v";
 uint32_t heartBeat                = 0;
 
