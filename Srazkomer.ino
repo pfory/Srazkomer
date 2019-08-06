@@ -86,10 +86,18 @@ unsigned long milisLastRunMinOld          = 0;
 const unsigned long   sendDelay             = 5000; //in ms
 const unsigned long   sendStatDelay         = 60000;
 
+#define mqtt_auth 1                                         // Set this to 0 to disable authentication
+#define mqtt_user               "datel"                     // Username for mqtt, not required if auth is disabled
+#define mqtt_password           "hanka12"                   // Password for mqtt, not required if auth is disabled
+#define mqtt_topic              "/home/Srazkomer/esp05/restart"           // here you have to set the topic for mqtt
 
-float versionSW                   = 1.1;
+float versionSW                   = 1.2;
 String versionSWString            = "Srazkomer v";
 uint32_t heartBeat                = 0;
+
+WiFiClient espClient;
+PubSubClient client(espClient);
+
 
 ADC_MODE(ADC_VCC);
 
@@ -111,6 +119,26 @@ auto timer = timer_create_default(); // create a timer with default settings
 Timer<> default_timer; // save as above
 
 const byte interruptPin = D5;
+
+//MQTT callback
+void callback(char* topic, byte* payload, unsigned int length) {
+  char * pEnd;
+  String val =  String();
+  DEBUG_PRINT("\nMessage arrived [");
+  DEBUG_PRINT(topic);
+  DEBUG_PRINT("] ");
+  for (int i=0;i<length;i++) {
+    DEBUG_PRINT((char)payload[i]);
+    val += (char)payload[i];
+  }
+  DEBUG_PRINTLN();
+ 
+  if (strcmp(topic, "/home/Meteo/restart")==0) {
+    DEBUG_PRINT("RESTART");
+    ESP.restart();
+  }
+}
+
 
 #ifdef serverHTTP
 void handleRoot() {
@@ -212,6 +240,110 @@ void setup() {
     // WiFi.mode(WIFI_AP);
   // }
   
+  setupWifi();
+
+#ifdef serverHTTP
+  server.on ( "/", handleRoot );
+  server.begin();
+  DEBUG_PRINTLN ( "HTTP server started!!" );
+#endif
+
+#ifdef time
+  DEBUG_PRINTLN("Setup TIME");
+  EthernetUdp.begin(localPort);
+  DEBUG_PRINT("Local port: ");
+  DEBUG_PRINTLN(EthernetUdp.localPort());
+  DEBUG_PRINTLN("waiting for sync");
+  setSyncProvider(getNtpTime);
+  setSyncInterval(300);
+  
+  printSystemTime();
+#endif
+
+#ifdef ota
+  //OTA
+  // Port defaults to 8266
+  // ArduinoOTA.setPort(8266);
+
+  // Hostname defaults to esp8266-[ChipID]
+  ArduinoOTA.setHostname(HOSTNAMEOTA);
+
+  // No authentication by default
+  // ArduinoOTA.setPassword("admin");
+
+  // Password can be set with it's md5 value as well
+  // MD5(admin) = 21232f297a57a5a743894a0e4a801fc3
+  // ArduinoOTA.setPasswordHash("21232f297a57a5a743894a0e4a801fc3");
+
+  ArduinoOTA.onStart([]() {
+    // String type;
+    // if (ArduinoOTA.getCommand() == U_FLASH)
+      // type = "sketch";
+    // else // U_SPIFFS
+      // type = "filesystem";
+
+    // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
+    //DEBUG_PRINTLN("Start updating " + type);
+    DEBUG_PRINTLN("Start updating ");
+  });
+  ArduinoOTA.onEnd([]() {
+   DEBUG_PRINTLN("\nEnd");
+  });
+  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+    DEBUG_PRINTF("Progress: %u%%\r", (progress / (total / 100)));
+  });
+  ArduinoOTA.onError([](ota_error_t error) {
+    DEBUG_PRINTF("Error[%u]: ", error);
+    if (error == OTA_AUTH_ERROR) DEBUG_PRINTLN("Auth Failed");
+    else if (error == OTA_BEGIN_ERROR) DEBUG_PRINTLN("Begin Failed");
+    else if (error == OTA_CONNECT_ERROR) DEBUG_PRINTLN("Connect Failed");
+    else if (error == OTA_RECEIVE_ERROR) DEBUG_PRINTLN("Receive Failed");
+    else if (error == OTA_END_ERROR) DEBUG_PRINTLN("End Failed");
+  });
+  ArduinoOTA.begin();
+#endif
+ 
+  //v klidu LOW, pulz HIGH
+  /*It have the output state light, if output high level, the lights are off. if output low level ,it on.
+  If it covered,it will output high level;otherwise it output low level.*/
+  pinMode(interruptPin, INPUT);
+  attachInterrupt(digitalPinToInterrupt(interruptPin), pulseCountEvent, RISING);
+  
+  client.setServer(mqtt_server, mqtt_port);
+  client.setCallback(callback);
+
+
+  //setup timers
+  timer.every(sendStatDelay, sendStatisticHA);
+
+  DEBUG_PRINTLN(" Ready");
+ 
+  ticker.detach();
+  //keep LED on
+  digitalWrite(BUILTIN_LED, HIGH);
+}
+
+void loop() {
+  timer.tick(); // tick the timer
+#ifdef serverHTTP
+  server.handleClient();
+#endif
+
+  if (pulseCount>0) {
+    sendDataHA();
+  }
+  
+  if (!client.connected()) {
+    reconnect();
+  }
+  client.loop();
+
+#ifdef ota
+  ArduinoOTA.handle();
+#endif
+}
+
+void setupWifi() {
   //WiFiManager
   //Local intialization. Once its business is done, there is no need to keep it around
   WiFiManager wifiManager;
@@ -288,99 +420,7 @@ void setup() {
   DEBUG_PRINT("Local ip : ");
   DEBUG_PRINTLN(WiFi.localIP());
   DEBUG_PRINTLN(WiFi.subnetMask());
-
-#ifdef serverHTTP
-  server.on ( "/", handleRoot );
-  server.begin();
-  DEBUG_PRINTLN ( "HTTP server started!!" );
-#endif
-
-#ifdef time
-  DEBUG_PRINTLN("Setup TIME");
-  EthernetUdp.begin(localPort);
-  DEBUG_PRINT("Local port: ");
-  DEBUG_PRINTLN(EthernetUdp.localPort());
-  DEBUG_PRINTLN("waiting for sync");
-  setSyncProvider(getNtpTime);
-  setSyncInterval(300);
-  
-  printSystemTime();
-#endif
-
-#ifdef ota
-  //OTA
-  // Port defaults to 8266
-  // ArduinoOTA.setPort(8266);
-
-  // Hostname defaults to esp8266-[ChipID]
-  ArduinoOTA.setHostname(HOSTNAMEOTA);
-
-  // No authentication by default
-  // ArduinoOTA.setPassword("admin");
-
-  // Password can be set with it's md5 value as well
-  // MD5(admin) = 21232f297a57a5a743894a0e4a801fc3
-  // ArduinoOTA.setPasswordHash("21232f297a57a5a743894a0e4a801fc3");
-
-  ArduinoOTA.onStart([]() {
-    // String type;
-    // if (ArduinoOTA.getCommand() == U_FLASH)
-      // type = "sketch";
-    // else // U_SPIFFS
-      // type = "filesystem";
-
-    // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
-    //DEBUG_PRINTLN("Start updating " + type);
-    DEBUG_PRINTLN("Start updating ");
-  });
-  ArduinoOTA.onEnd([]() {
-   DEBUG_PRINTLN("\nEnd");
-  });
-  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-    DEBUG_PRINTF("Progress: %u%%\r", (progress / (total / 100)));
-  });
-  ArduinoOTA.onError([](ota_error_t error) {
-    DEBUG_PRINTF("Error[%u]: ", error);
-    if (error == OTA_AUTH_ERROR) DEBUG_PRINTLN("Auth Failed");
-    else if (error == OTA_BEGIN_ERROR) DEBUG_PRINTLN("Begin Failed");
-    else if (error == OTA_CONNECT_ERROR) DEBUG_PRINTLN("Connect Failed");
-    else if (error == OTA_RECEIVE_ERROR) DEBUG_PRINTLN("Receive Failed");
-    else if (error == OTA_END_ERROR) DEBUG_PRINTLN("End Failed");
-  });
-  ArduinoOTA.begin();
-#endif
- 
-  //v klidu LOW, pulz HIGH
-  /*It have the output state light, if output high level, the lights are off. if output low level ,it on.
-  If it covered,it will output high level;otherwise it output low level.*/
-  pinMode(interruptPin, INPUT);
-  attachInterrupt(digitalPinToInterrupt(interruptPin), pulseCountEvent, RISING);
-
-  //setup timers
-  timer.every(sendStatDelay, sendStatisticHA);
-
-  DEBUG_PRINTLN(" Ready");
- 
-  ticker.detach();
-  //keep LED on
-  digitalWrite(BUILTIN_LED, HIGH);
 }
-
-void loop() {
-  timer.tick(); // tick the timer
-#ifdef serverHTTP
-  server.handleClient();
-#endif
-
-  if (pulseCount>0) {
-    sendDataHA();
-  }
-
-#ifdef ota
-  ArduinoOTA.handle();
-#endif
-}
-
 
 void validateInput(const char *input, char *output)
 {
@@ -669,4 +709,22 @@ void pulseCountEvent() {
     pulseCount++;
   }
   digitalWrite(BUILTIN_LED, HIGH);
+}
+
+void reconnect() {
+  while (!client.connected()) {
+    DEBUG_PRINT("\nAttempting MQTT connection...");
+    if (mqtt_auth == 1) {
+      if (client.connect("Srazkomer", mqtt_user, mqtt_password)) {
+        DEBUG_PRINTLN("connected");
+        client.subscribe(mqtt_topic);
+      } else {
+        DEBUG_PRINT("failed, rc=");
+        DEBUG_PRINT(client.state());
+        DEBUG_PRINTLN(" try again in 5 seconds");
+        delay(5000);
+        setupWifi();
+      }
+    }
+  }
 }
