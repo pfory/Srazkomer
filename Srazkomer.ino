@@ -91,7 +91,7 @@ const unsigned long   sendStatDelay         = 60000;
 #define mqtt_password           "hanka12"                   // Password for mqtt, not required if auth is disabled
 #define mqtt_topic              "/home/Srazkomer/esp05/restart"           // here you have to set the topic for mqtt
 
-float versionSW                   = 1.21;
+float versionSW                   = 1.22;
 String versionSWString            = "Srazkomer v";
 uint32_t heartBeat                = 0;
 
@@ -133,7 +133,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
   DEBUG_PRINTLN();
  
-  if (strcmp(topic, "/home/Meteo/restart")==0) {
+  if (strcmp(topic, "/home/Srazkomer/esp05/restart")==0) {
     DEBUG_PRINT("RESTART");
     ESP.restart();
   }
@@ -316,11 +316,13 @@ void setup() {
   //setup timers
   timer.every(sendStatDelay, sendStatisticHA);
 
-  DEBUG_PRINTLN(" Ready");
+  void * a;
+  sendStatisticHA(a);
  
   ticker.detach();
   //keep LED on
   digitalWrite(BUILTIN_LED, HIGH);
+  DEBUG_PRINTLN(" Ready");
 }
 
 void loop() {
