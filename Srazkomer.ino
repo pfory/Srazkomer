@@ -340,6 +340,9 @@ void setup() {
   //setup timers
   timer.every(sendStatDelay, sendStatisticHA);
 
+  void * a;
+  sendStatisticHA(a);
+
   DEBUG_PRINTLN(" Ready");
  
   ticker.detach();
