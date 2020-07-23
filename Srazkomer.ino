@@ -3,97 +3,23 @@
 */
 //Wemos D1 R2 & mini !!!!!!!!!! SPIFSS 1M !!!!!!!!!!!!
 
+#include "configuration.h"
 
-#include <ESP8266WiFi.h>
-#include <WiFiManager.h> 
-#include <FS.h>          //this needs to be first
-#include <Ticker.h>
-#include <ArduinoJson.h> //https://github.com/bblanchon/ArduinoJson
-#include "DoubleResetDetector.h" // https://github.com/datacute/DoubleResetDetector
-#include "Sender.h"
-#include <Wire.h>
-
-#define ota
-#ifdef ota
-#include <ArduinoOTA.h>
-#define HOSTNAMEOTA   "Srazkomer"
-#endif
-
-#define AUTOCONNECTNAME   HOSTNAMEOTA
-#define AUTOCONNECTPWD    "password"
-
-//#define serverHTTP
 #ifdef serverHTTP
 #include <ESP8266WebServer.h>
 ESP8266WebServer server(80);
 #endif
 
-//#define time
-#ifdef time
-#include <TimeLib.h>
-#include <Timezone.h>
-WiFiUDP EthernetUdp;
-static const char     ntpServerName[]       = "tik.cesnet.cz";
-//const int timeZone = 2;     // Central European Time
-//Central European Time (Frankfurt, Paris)
-TimeChangeRule        CEST                  = {"CEST", Last, Sun, Mar, 2, 120};     //Central European Summer Time
-TimeChangeRule        CET                   = {"CET", Last, Sun, Oct, 3, 60};       //Central European Standard Time
-Timezone CE(CEST, CET);
-unsigned int          localPort             = 8888;  // local port to listen for UDP packets
-time_t getNtpTime();
-#endif
+unsigned int volatile pulseCount            = 0;
+unsigned long lastPulseMillis               = 0;
+bool pulseNow                               = false;
 
-#define verbose
-#ifdef verbose
- #define PORTSPEED              115200
- #define DEBUG_PRINT(x)         Serial.print (x)
- #define DEBUG_PRINTDEC(x)      Serial.print (x, DEC)
- #define DEBUG_PRINTLN(x)       Serial.println (x)
- #define DEBUG_PRINTF(x, y)     Serial.printf (x, y)
- #define PORTSPEED 115200
- #define SERIAL_BEGIN           Serial.begin(PORTSPEED)
-#else
- #define DEBUG_PRINT(x)
- #define DEBUG_PRINTDEC(x)
- #define DEBUG_PRINTLN(x)
- #define DEBUG_PRINTF(x, y)
- #define SERIAL_BEGIN
-#endif 
+unsigned long milisLastRunMinOld            = 0;
 
-char                  mqtt_server[40]       = "192.168.1.56";
-uint16_t              mqtt_port             = 1883;
-char                  mqtt_username[40]     = "datel";
-char                  mqtt_key[20]          = "hanka12";
-char                  mqtt_base[60]         = "/home/Srazkomer/esp05";
-char                  static_ip[16]         = "192.168.1.107";
-char                  static_gw[16]         = "192.168.1.1";
-char                  static_sn[16]         = "255.255.255.0";
-
-#define DRD_TIMEOUT       1
-// RTC Memory Address for the DoubleResetDetector to use
-#define DRD_ADDRESS       0
-DoubleResetDetector drd(DRD_TIMEOUT, DRD_ADDRESS);
-
-#define CFGFILE "/config.json"
-
-
-unsigned int volatile pulseCount          = 0;
-unsigned long lastPulseMillis             = 0;
-bool pulseNow                             = false;
-
-unsigned long milisLastRunMinOld          = 0;
-
-const unsigned long   sendDelay             = 5000; //in ms
 const unsigned long   sendStatDelay         = 60000;
 
-#define mqtt_auth 1                                         // Set this to 0 to disable authentication
-#define mqtt_user               "datel"                     // Username for mqtt, not required if auth is disabled
-#define mqtt_password           "hanka12"                   // Password for mqtt, not required if auth is disabled
-#define mqtt_topic              "/home/Srazkomer/esp05/restart"           // here you have to set the topic for mqtt
+uint32_t heartBeat                          = 0;
 
-float versionSW                   = 1.3;
-String versionSWString            = "Srazkomer v";
-uint32_t heartBeat                = 0;
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -212,26 +138,30 @@ void configModeCallback (WiFiManager *myWiFiManager) {
 
 void setup() {
   SERIAL_BEGIN;
-  DEBUG_PRINT(versionSWString);
-  DEBUG_PRINTLN(versionSW);
-
-  pinMode(BUILTIN_LED, OUTPUT);
-  ticker.attach(1, tick);
+  DEBUG_PRINT(F(SW_NAME));
+  DEBUG_PRINT(F(" "));
+  DEBUG_PRINTLN(F(VERSION));
   
-   bool _dblreset = drd.detectDoubleReset();
+  pinMode(STATUS_LED, OUTPUT);
+  ticker.attach(1, tick);
     
   WiFi.printDiag(Serial);
     
-  // bool validConf = readConfig();
-  // if (!validConf) {
-    // DEBUG_PRINTLN(F("ERROR config corrupted"));
-  // }
-  
+ 
   rst_info *_reset_info = ESP.getResetInfoPtr();
   uint8_t _reset_reason = _reset_info->reason;
   DEBUG_PRINT("Boot-Mode: ");
   DEBUG_PRINTLN(_reset_reason);
   heartBeat = _reset_reason;
+  /*
+  REASON_DEFAULT_RST             = 0      normal startup by power on 
+  REASON_WDT_RST                 = 1      hardware watch dog reset 
+  REASON_EXCEPTION_RST           = 2      exception reset, GPIO status won't change 
+  REASON_SOFT_WDT_RST            = 3      software watch dog reset, GPIO status won't change 
+  REASON_SOFT_RESTART            = 4      software restart ,system_restart , GPIO status won't change 
+  REASON_DEEP_SLEEP_AWAKE        = 5      wake up from deep-sleep 
+  REASON_EXT_SYS_RST             = 6      external system reset 
+  */
   
   client.setServer(mqtt_server, mqtt_port);
   client.setCallback(callback);
@@ -396,7 +326,7 @@ bool sendStatisticHA(void *) {
   DEBUG_PRINTLN(F(" - I am sending statistic to HA"));
 
   SenderClass sender;
-  sender.add("VersionSW", versionSW);
+  sender.add("VersionSW", VERSION);
   sender.add("Napeti",  ESP.getVcc());
   sender.add("HeartBeat", heartBeat++);
   sender.add("RSSI", WiFi.RSSI());
@@ -408,83 +338,6 @@ bool sendStatisticHA(void *) {
 }
 
 
-#ifdef time
-/*-------- NTP code ----------*/
-
-const int NTP_PACKET_SIZE = 48; // NTP time is in the first 48 bytes of message
-byte packetBuffer[NTP_PACKET_SIZE]; //buffer to hold incoming & outgoing packets
-
-time_t getNtpTime()
-{
-  //IPAddress ntpServerIP; // NTP server's ip address
-  IPAddress ntpServerIP = IPAddress(195, 113, 144, 201);
-
-  while (EthernetUdp.parsePacket() > 0) ; // discard any previously received packets
-  DEBUG_PRINTLN("Transmit NTP Request");
-  // get a random server from the pool
-  //WiFi.hostByName(ntpServerName, ntpServerIP);
-  DEBUG_PRINT(ntpServerName);
-  DEBUG_PRINT(": ");
-  DEBUG_PRINTLN(ntpServerIP);
-  sendNTPpacket(ntpServerIP);
-  uint32_t beginWait = millis();
-  while (millis() - beginWait < 1500) {
-    int size = EthernetUdp.parsePacket();
-    if (size >= NTP_PACKET_SIZE) {
-      DEBUG_PRINTLN("Receive NTP Response");
-      EthernetUdp.read(packetBuffer, NTP_PACKET_SIZE);  // read packet into the buffer
-      unsigned long highWord = word(packetBuffer[40], packetBuffer[41]);
-      unsigned long lowWord = word(packetBuffer[42], packetBuffer[43]);
-      // combine the four bytes (two words) into a long integer
-      // this is NTP time (seconds since Jan 1 1900):
-      unsigned long secsSince1900 = highWord << 16 | lowWord;
-      DEBUG_PRINT("Seconds since Jan 1 1900 = " );
-      DEBUG_PRINTLN(secsSince1900);
-
-      // now convert NTP time into everyday time:
-      DEBUG_PRINT("Unix time = ");
-      // Unix time starts on Jan 1 1970. In seconds, that's 2208988800:
-      const unsigned long seventyYears = 2208988800UL;
-      // subtract seventy years:
-      unsigned long epoch = secsSince1900 - seventyYears;
-      // print Unix time:
-      DEBUG_PRINTLN(epoch);
-	  
-      TimeChangeRule *tcr;
-      time_t utc;
-      utc = epoch;
-      
-      return CE.toLocal(utc, &tcr);
-      //return secsSince1900 - 2208988800UL + timeZone * SECS_PER_HOUR;
-    }
-  }
-  DEBUG_PRINTLN("No NTP Response :-(");
-  return 0; // return 0 if unable to get the time
-}
-
-// send an NTP request to the time server at the given address
-void sendNTPpacket(IPAddress &address)
-{
-  // set all bytes in the buffer to 0
-  memset(packetBuffer, 0, NTP_PACKET_SIZE);
-  // Initialize values needed to form NTP request
-  // (see URL above for details on the packets)
-  packetBuffer[0] = 0b11100011;   // LI, Version, Mode
-  packetBuffer[1] = 0;     // Stratum, or type of clock
-  packetBuffer[2] = 6;     // Polling Interval
-  packetBuffer[3] = 0xEC;  // Peer Clock Precision
-  // 8 bytes of zero for Root Delay & Root Dispersion
-  packetBuffer[12] = 49;
-  packetBuffer[13] = 0x4E;
-  packetBuffer[14] = 49;
-  packetBuffer[15] = 52;
-  // all NTP fields have been given values, now
-  // you can send a packet requesting a timestamp:
-  EthernetUdp.beginPacket(address, 123); //NTP requests are to port 123
-  EthernetUdp.write(packetBuffer, NTP_PACKET_SIZE);
-  EthernetUdp.endPacket();
-}
-
 void printDigits(int digits){
   // utility function for digital clock display: prints preceding
   // colon and leading 0
@@ -493,8 +346,6 @@ void printDigits(int digits){
     DEBUG_PRINT('0');
   DEBUG_PRINT(digits);
 }
-
-#endif
 
 void printSystemTime(){
 #ifdef time
@@ -520,18 +371,19 @@ void pulseCountEvent() {
 }
 
 void reconnect() {
+  // Loop until we're reconnected
   while (!client.connected()) {
-    DEBUG_PRINT("\nAttempting MQTT connection...");
-    if (mqtt_auth == 1) {
-      if (client.connect("Srazkomer", mqtt_user, mqtt_password)) {
-        DEBUG_PRINTLN("connected");
-        client.subscribe(mqtt_topic);
-      } else {
-        DEBUG_PRINT("failed, rc=");
-        DEBUG_PRINT(client.state());
-        DEBUG_PRINTLN(" try again in 5 seconds");
-        delay(5000);
-      }
+    DEBUG_PRINT("Attempting MQTT connection...");
+    // Attempt to connect
+    if (client.connect(mqtt_base, mqtt_username, mqtt_key)) {
+      DEBUG_PRINTLN("connected");
+      client.subscribe((String(mqtt_base) + "/" + String(mqtt_topic_restart)).c_str());
+    } else {
+      DEBUG_PRINT("failed, rc=");
+      DEBUG_PRINT(client.state());
+      DEBUG_PRINTLN(" try again in 5 seconds");
+      // Wait 5 seconds before retrying
+      delay(5000);
     }
   }
 }
