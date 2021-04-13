@@ -11,11 +11,11 @@
 #include <Wire.h>
 
 //SW name & version
-#define     VERSION                          "1.40"
+#define     VERSION                          "1.50"
 #define     SW_NAME                          "Srazkomer"
 
 //HW
-//Wemos D1 R2 & mini !!!!!!!!!! SPIFSS 1M !!!!!!!!!!!!
+//Wemos D1 R2 & mini 
 
 #define timers
 #define ota
@@ -28,7 +28,7 @@
 
 #ifdef ota
 #include <ArduinoOTA.h>
-#define HOSTNAMEOTA   "Srazkomer"
+#define HOSTNAMEOTA   SW_NAME VERSION
 #endif
 
 #ifdef verbose
@@ -58,6 +58,7 @@
 //SDA                                       D2 //                           GPIO04
 //SCL                                       D1 //                           GPIO05
 //BUILTIN_LED                               D4 //10k Pull-up, BUILTIN_LED   GPIO02
+#define INTERRUPTPIN                        2
 
 
 static const char* const      mqtt_server                    = "192.168.1.56";
@@ -65,13 +66,25 @@ static const uint16_t         mqtt_port                      = 1883;
 static const char* const      mqtt_username                  = "datel";
 static const char* const      mqtt_key                       = "hanka12";
 static const char* const      mqtt_base                      = "/home/Srazkomer/esp05";
-static const char* const      static_ip                      = "192.168.1.107";
-static const char* const      static_gw                      = "192.168.1.1";
-static const char* const      static_sn                      = "255.255.255.0";
+// static const char* const      static_ip                      = "192.168.1.107";
+// static const char* const      static_gw                      = "192.168.1.1";
+// static const char* const      static_sn                      = "255.255.255.0";
 static const char* const      mqtt_topic_restart             = "restart";
+static const char* const      mqtt_topic_netinfo             = "netinfo";
 
 
-#define CFGFILE "/config.json"
+uint32_t              connectDelay                = 30000; //30s
+uint32_t              lastConnectAttempt          = 0; 
+
+// Number of seconds after reset during which a
+// subseqent reset will be considered a double reset.
+#define DRD_TIMEOUT 2
+// RTC Memory Address for the DoubleResetDetector to use
+#define DRD_ADDRESS 0
+
+#define CONFIG_PORTAL_TIMEOUT 60 //jak dlouho zustane v rezimu AP nez se cip resetuje
+#define CONNECT_TIMEOUT 120 //jak dlouho se ceka na spojeni nez se aktivuje config portal
+  
 
 
 #endif
