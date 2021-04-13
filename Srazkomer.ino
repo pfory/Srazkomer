@@ -49,8 +49,6 @@ Ticker ticker;
 auto timer = timer_create_default(); // create a timer with default settings
 Timer<> default_timer; // save as above
 
-const byte interruptPin = D5;
-
 //MQTT callback
 void callback(char* topic, byte* payload, unsigned int length) {
   char * pEnd;
