@@ -12,11 +12,6 @@ ESP8266WebServer server(80);
 
 unsigned int volatile pulseCount            = 0;
 unsigned long lastPulseMillis               = 0;
-bool pulseNow                               = false;
-
-unsigned long milisLastRunMinOld            = 0;
-
-const unsigned long   sendStatDelay         = 60000;
 
 uint32_t heartBeat                          = 0;
 
@@ -142,8 +137,6 @@ WiFiClient espClient;
 PubSubClient client(espClient);
 
 WiFiManager wifiManager;
-
-void ICACHE_RAM_ATTR handleInterrupt();
 
 void setup() {
   SERIAL_BEGIN;
@@ -275,7 +268,7 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(INTERRUPTPIN), pulseCountEvent, RISING);
   
   //setup timers
-  timer.every(sendStatDelay, sendStatisticHA);
+  timer.every(SENDSTAT_DELAY, sendStatisticHA);
 
   void * a;
   sendStatisticHA(a);
@@ -308,7 +301,7 @@ void loop() {
 }
 
 bool sendDataHA() {
-  noInterrupts();
+  //noInterrupts();
   digitalWrite(BUILTIN_LED, LOW);
   printSystemTime();
   DEBUG_PRINTLN(F("Data"));
@@ -324,7 +317,7 @@ bool sendDataHA() {
   }
   
   digitalWrite(BUILTIN_LED, HIGH);
-  interrupts();
+  //interrupts();
   return true;
 }
 

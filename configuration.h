@@ -11,7 +11,7 @@
 #include <Wire.h>
 
 //SW name & version
-#define     VERSION                          "1.51"
+#define     VERSION                          "1.52"
 #define     SW_NAME                          "Srazkomer"
 
 //HW
@@ -85,6 +85,6 @@ uint32_t              lastConnectAttempt          = 0;
 #define CONFIG_PORTAL_TIMEOUT 60 //jak dlouho zustane v rezimu AP nez se cip resetuje
 #define CONNECT_TIMEOUT 120 //jak dlouho se ceka na spojeni nez se aktivuje config portal
   
-
+#define SENDSTAT_DELAY                       60000 //poslani statistiky kazdou minutu
 
 #endif
