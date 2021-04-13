@@ -11,7 +11,7 @@
 #include <Wire.h>
 
 //SW name & version
-#define     VERSION                          "1.50"
+#define     VERSION                          "1.51"
 #define     SW_NAME                          "Srazkomer"
 
 //HW
@@ -51,14 +51,14 @@
 
 //All of the IO pins have interrupt/pwm/I2C/one-wire support except D0.
 #define STATUS_LED                          BUILTIN_LED //status LED
-#define LED2PIN                             D3 //stav rele, 10k Pull-up     GPIO00
-#define RELAY1PIN                           D8 //pin rele 1                 GPIO16
-#define RELAY2PIN                           D6 //pin rele 2, MISO           GPIO12
-#define PIRPIN                              D5 //pin pir sensoru, SCK       GPIO14
+//#define                                                   10k Pull-up     GPIO00
+//#define                                                                   GPIO16
+//#define                                                   MISO            GPIO12
+//#define                                                   SCK             GPIO14
 //SDA                                       D2 //                           GPIO04
 //SCL                                       D1 //                           GPIO05
 //BUILTIN_LED                               D4 //10k Pull-up, BUILTIN_LED   GPIO02
-#define INTERRUPTPIN                        2
+#define INTERRUPTPIN                        D5
 
 
 static const char* const      mqtt_server                    = "192.168.1.56";
