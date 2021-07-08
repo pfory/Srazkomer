@@ -154,7 +154,7 @@ void setup() {
   wifiManager.setConfigPortalTimeout(CONFIG_PORTAL_TIMEOUT);
   wifiManager.setConnectTimeout(CONNECT_TIMEOUT);
   
-    if (drd.detectDoubleReset()) {
+  if (drd.detectDoubleReset()) {
     DEBUG_PRINTLN("Double reset detected, starting config portal...");
     ticker.attach(0.2, tick);
     if (!wifiManager.startConfigPortal(HOSTNAMEOTA)) {
