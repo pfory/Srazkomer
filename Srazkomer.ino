@@ -19,7 +19,7 @@ DoubleResetDetector drd(DRD_TIMEOUT, DRD_ADDRESS);
 
 void ICACHE_RAM_ATTR pulseCountEvent() {
   digitalWrite(BUILTIN_LED, LOW);
-  if (millis() - lastPulseMillis > 5000) {
+  if (millis() - lastPulseMillis > 1000) {
     lastPulseMillis = millis();
     pulseCount++;
   }

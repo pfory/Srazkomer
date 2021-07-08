@@ -11,7 +11,7 @@
 #include <Wire.h>
 
 //SW name & version
-#define     VERSION                          "1.52"
+#define     VERSION                          "1.53"
 #define     SW_NAME                          "Srazkomer"
 
 //HW
