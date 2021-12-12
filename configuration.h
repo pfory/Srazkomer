@@ -1,18 +1,12 @@
 #ifndef CONFIGURATION_H
 #define CONFIGURATION_H
 
-#include <ESP8266WiFi.h>
-#include <WiFiManager.h> 
 #include <FS.h>          //this needs to be first
-#include <Ticker.h>
-#include <ArduinoJson.h> //https://github.com/bblanchon/ArduinoJson
-#include "DoubleResetDetector.h" // https://github.com/datacute/DoubleResetDetector
 #include <Wire.h>
-#include <timer.h>
-#include <PubSubClient.h>
+#include <ArduinoJson.h>
 
 //SW name & version
-#define     VERSION                          "1.70"
+#define     VERSION                          "1.71"
 #define     SW_NAME                          "Srazkomer"
 
 #define timers
@@ -46,7 +40,7 @@ static const char* const      mqtt_config_portal_stop        = "disconfig";
 
 
 #define CONFIG_PORTAL_TIMEOUT 60 //jak dlouho zustane v rezimu AP nez se cip resetuje
-#define CONNECT_TIMEOUT 5 //jak dlouho se ceka na spojeni nez se aktivuje config portal
+#define CONNECT_TIMEOUT 120 //jak dlouho se ceka na spojeni nez se aktivuje config portal
   
 #define SENDSTAT_DELAY                       60000 //poslani statistiky kazdou minutu
 #define CONNECT_DELAY                        5000 //ms
