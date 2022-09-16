@@ -38,10 +38,6 @@ static const char* const      mqtt_topic_netinfo             = "netinfo";
 static const char* const      mqtt_config_portal             = "config";
 static const char* const      mqtt_config_portal_stop        = "disconfig";
 
-
-#define CONFIG_PORTAL_TIMEOUT 60 //jak dlouho zustane v rezimu AP nez se cip resetuje
-#define CONNECT_TIMEOUT 120 //jak dlouho se ceka na spojeni nez se aktivuje config portal
-  
 #define SENDSTAT_DELAY                       60000 //poslani statistiky kazdou minutu
 #define CONNECT_DELAY                        5000 //ms
 

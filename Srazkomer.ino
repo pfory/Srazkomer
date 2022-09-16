@@ -13,25 +13,24 @@ unsigned int volatile pulseCount            = 0;
 unsigned long lastPulseMillis               = 0;
 
 
-void ICACHE_RAM_ATTR pulseCountEvent() {
-  digitalWrite(BUILTIN_LED, LOW);
+void IRAM_ATTR pulseCountEvent() {
+  digitalWrite(LED_BUILTIN, LOW);
   if (millis() - lastPulseMillis > 1000) {
     lastPulseMillis = millis();
     pulseCount++;
   }
-  digitalWrite(BUILTIN_LED, HIGH);
+  digitalWrite(LED_BUILTIN, HIGH);
 }
 
 ADC_MODE(ADC_VCC);
 
 //MQTT callback
 void callback(char* topic, byte* payload, unsigned int length) {
-  char * pEnd;
   String val =  String();
   DEBUG_PRINT("\nMessage arrived [");
   DEBUG_PRINT(topic);
   DEBUG_PRINT("] ");
-  for (int i=0;i<length;i++) {
+  for (unsigned int i=0;i<length;i++) {
     DEBUG_PRINT((char)payload[i]);
     val += (char)payload[i];
   }
@@ -53,9 +52,9 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
 #ifdef serverHTTP
 void handleRoot() {
-  digitalWrite(BUILTIN_LED, LOW);
+  digitalWrite(LED_BUILTIN, LOW);
 	char temp[600];
-  digitalWrite(BUILTIN_LED, HIGH);
+  digitalWrite(LED_BUILTIN, HIGH);
 }
 #endif
 
@@ -81,7 +80,7 @@ void setup() {
   
   ticker.detach();
   //keep LED on
-  digitalWrite(BUILTIN_LED, HIGH);
+  digitalWrite(LED_BUILTIN, HIGH);
 
   drd.stop();
 
@@ -110,7 +109,7 @@ void loop() {
 }
 
 bool sendDataMQTT() {
-  digitalWrite(BUILTIN_LED, LOW);
+  digitalWrite(LED_BUILTIN, LOW);
   DEBUG_PRINTLN(F("Data"));
   
   client.publish((String(mqtt_base) + "/Pulse").c_str(), String(pulseCount).c_str());
@@ -119,7 +118,7 @@ bool sendDataMQTT() {
 
   pulseCount = 0;
  
-  digitalWrite(BUILTIN_LED, HIGH);
+  digitalWrite(LED_BUILTIN, HIGH);
   return true;
 }
 
