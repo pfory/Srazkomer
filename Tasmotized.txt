@@ -1,1 +1,4 @@
 27.8.2024
+//od 20.8.2025 nahrazeno typem MR3H-FC viz https://www.meteoservis.cz/en/63-TB-RAIN-GAUGES/79-MR3H-FC
+//1 impuls = 0.1mm srážek
+//Tasmota counterDebounce 100
